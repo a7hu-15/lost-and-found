@@ -5,6 +5,8 @@ from app.models.match import MatchScore, MatchStatus
 from app.models.claim import Claim, ClaimStatus
 from app.models.audit import AuditLog
 from app.models.support_ticket import SupportTicket, TicketStatus
+from app.models.staff_invitation import StaffInvitation
+from app.models.password_reset import PasswordResetToken
 
 __all__ = [
     "User",
@@ -19,4 +21,6 @@ __all__ = [
     "AuditLog",
     "SupportTicket",
     "TicketStatus",
+    "StaffInvitation",
+    "PasswordResetToken",
 ]

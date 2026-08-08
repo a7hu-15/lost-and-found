@@ -11,6 +11,19 @@
   --text-secondary: #A1A1AA;
   --brand-accent: #FF8A00;
   --input-bg: #09090B;
+
+  /* Admin Dark Mode System Tokens */
+  --admin-bg: #090909;
+  --admin-surface: #151515;
+  --admin-surface-subtle: #1C1C1C;
+  --admin-border: #292929;
+  --admin-text-primary: #F5F5F5;
+  --admin-text-secondary: #B5B5B5;
+  --admin-text-muted: #858585;
+  --admin-accent: #FF8A00;
+  --admin-accent-hover: #FF9A2E;
+  --admin-active-bg: #242424;
+  --admin-active-text: #FF9A2E;
 }
 
 html.light {
@@ -22,6 +35,19 @@ html.light {
   --text-secondary: #71717A;
   --brand-accent: #F97316;
   --input-bg: #F4F4F5;
+
+  /* Admin Light Mode System Tokens */
+  --admin-bg: #F7F7F8;
+  --admin-surface: #FFFFFF;
+  --admin-surface-subtle: #F2F2F4;
+  --admin-border: #E2E2E5;
+  --admin-text-primary: #171717;
+  --admin-text-secondary: #666666;
+  --admin-text-muted: #8A8A8A;
+  --admin-accent: #FF7A00;
+  --admin-accent-hover: #E66D00;
+  --admin-active-bg: #FFF1E5;
+  --admin-active-text: #D95F00;
 }
 
 @layer base {
@@ -33,7 +59,60 @@ html.light {
   }
 }
 
-/* Linear / Vercel Enterprise SaaS UI Components */
+/* Centralized Admin Design System Components */
+
+.admin-card {
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-primary);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-button-primary {
+  background-color: var(--admin-accent);
+  color: #FFFFFF !important;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-button-primary:hover {
+  opacity: 0.92;
+}
+
+.admin-button-secondary {
+  background-color: var(--admin-surface-subtle);
+  color: var(--admin-text-primary) !important;
+  border: 1px solid var(--admin-border);
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-button-secondary:hover {
+  border-color: var(--admin-accent);
+}
+
+.admin-input {
+  background-color: var(--admin-surface-subtle);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text-primary);
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+}
+
+/* Linear / Vercel Enterprise Public SaaS UI Components */
 
 .saas-card {
   background-color: var(--surface-color);

@@ -8,6 +8,9 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => void;
   isLoading: boolean;
+  isOwner: boolean;
+  isStaff: boolean;
+  hasPermission: (permKey: string) => boolean;
   isAdmin: boolean;
   isSecurityStaff: boolean;
 }
@@ -48,11 +51,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const isAdmin = user?.role === 'ADMIN';
-  const isSecurityStaff = user?.role === 'SECURITY_STAFF' || isAdmin;
+  const roleStr = user?.role ? (typeof user.role === 'string' ? user.role : String(user.role)) : '';
+  const isOwner = roleStr === 'ADMIN_OWNER' || roleStr === 'ADMIN';
+  const isStaff = isOwner || roleStr === 'ADMIN_STAFF' || roleStr === 'SECURITY_STAFF';
+
+  const hasPermission = (permKey: string): boolean => {
+    if (!user) return false;
+    if (isOwner) return true;
+    if (!isStaff) return false;
+    const perms = user.permissions || {};
+    return perms[permKey] === true;
+  };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAdmin, isSecurityStaff }}>
+    <AuthContext.Provider value={{
+      user, token, login, logout, isLoading,
+      isOwner, isStaff, hasPermission,
+      isAdmin: isOwner, isSecurityStaff: isStaff
+    }}>
       {children}
     </AuthContext.Provider>
   );

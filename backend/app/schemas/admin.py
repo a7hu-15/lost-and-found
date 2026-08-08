@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from app.models.user import UserRole
@@ -45,3 +45,28 @@ class TrendDataPoint(BaseModel):
 
 class AdminAnalyticsTrend(BaseModel):
     trends: List[TrendDataPoint]
+
+class StaffInviteRequest(BaseModel):
+    full_name: str
+    email: EmailStr
+    permissions: Dict[str, bool]
+
+class StaffPermissionsUpdate(BaseModel):
+    permissions: Dict[str, bool]
+    current_password: str
+
+class StaffStatusUpdate(BaseModel):
+    is_active: bool
+    current_password: str
+
+class StaffMemberOut(BaseModel):
+    id: str
+    email: EmailStr
+    full_name: str
+    role: UserRole
+    permissions: Dict[str, bool]
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

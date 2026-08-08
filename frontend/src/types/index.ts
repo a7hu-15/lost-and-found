@@ -1,10 +1,12 @@
-export type UserRole = 'STUDENT' | 'FACULTY' | 'SECURITY_STAFF' | 'ADMIN';
+export type UserRole = 'USER' | 'ADMIN_STAFF' | 'ADMIN_OWNER' | 'STUDENT' | 'FACULTY' | 'SECURITY_STAFF' | 'ADMIN';
 
 export interface User {
   id: string;
   email: string;
   full_name: string;
   role: UserRole;
+  permissions?: Record<string, boolean>;
+  mfa_enabled?: boolean;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
@@ -121,4 +123,14 @@ export interface TrendDataPoint {
   date: string;
   lost_count: number;
   found_count: number;
+}
+
+export interface StaffMemberOut {
+  id: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  permissions: Record<string, boolean>;
+  is_active: boolean;
+  created_at: string;
 }

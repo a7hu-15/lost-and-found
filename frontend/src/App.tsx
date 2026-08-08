@@ -23,6 +23,9 @@ import { HowItWorks } from './pages/HowItWorks';
 // Admin Imports
 import { ProtectedRoute } from './components/admin/ProtectedRoute';
 import { AdminLogin } from './pages/admin/AdminLogin';
+import { AdminForgotPassword } from './pages/admin/AdminForgotPassword';
+import { AdminResetPassword } from './pages/admin/AdminResetPassword';
+import { AdminAcceptInvite } from './pages/admin/AdminAcceptInvite';
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminOverview } from './pages/admin/AdminOverview';
 import { AdminUsers } from './pages/admin/AdminUsers';
@@ -32,6 +35,8 @@ import { AdminClaims } from './pages/admin/AdminClaims';
 import { AdminSupport } from './pages/admin/AdminSupport';
 import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 import { AdminAuditLogs } from './pages/admin/AdminAuditLogs';
+import { AdminStaff } from './pages/admin/AdminStaff';
+import { AdminAccount } from './pages/admin/AdminAccount';
 
 // Public site layout wrapper with Navbar & Footer
 const PublicLayout: React.FC = () => (
@@ -51,8 +56,11 @@ export const App: React.FC = () => {
         <Router>
           <Routes>
             
-            {/* Standalone Admin Login */}
+            {/* Standalone Admin Auth Pages */}
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+            <Route path="/admin/reset-password" element={<AdminResetPassword />} />
+            <Route path="/admin/accept-invite" element={<AdminAcceptInvite />} />
 
             {/* Protected Private Admin Console */}
             <Route element={<ProtectedRoute />}>
@@ -65,6 +73,8 @@ export const App: React.FC = () => {
                 <Route path="/admin/support" element={<AdminSupport />} />
                 <Route path="/admin/analytics" element={<AdminAnalytics />} />
                 <Route path="/admin/audit" element={<AdminAuditLogs />} />
+                <Route path="/admin/staff" element={<AdminStaff />} />
+                <Route path="/admin/account" element={<AdminAccount />} />
               </Route>
             </Route>
 

@@ -2,10 +2,11 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func
 
 from app.database.session import get_db
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, DEFAULT_PERMISSIONS
+from app.models.staff_invitation import StaffInvitation
 from app.models.lost_item import LostItem, ItemStatus
 from app.models.found_item import FoundItem
 from app.models.match import MatchScore
@@ -14,19 +15,24 @@ from app.models.support_ticket import SupportTicket, TicketStatus
 from app.models.audit import AuditLog
 from app.schemas.admin import (
     AuditLogOut, DashboardStats, UserRoleUpdate, UserStatusUpdate,
-    ItemStatusUpdate, AdminAnalyticsTrend, TrendDataPoint
+    ItemStatusUpdate, AdminAnalyticsTrend, TrendDataPoint,
+    StaffInviteRequest, StaffPermissionsUpdate, StaffStatusUpdate, StaffMemberOut
 )
 from app.schemas.auth import UserOut
 from app.schemas.support import SupportTicketOut, SupportTicketStatusUpdate
 from app.schemas.lost_item import LostItemOut
 from app.schemas.found_item import FoundItemOut
-from app.security.dependencies import require_roles
+from app.security.passwords import verify_password
+from app.security.dependencies import (
+    get_current_user, require_admin_owner, require_permission, require_any_admin
+)
+from app.notifications.service import send_staff_invitation_email
 
 router = APIRouter()
 
 @router.get("/stats", response_model=DashboardStats)
 async def get_dashboard_stats(
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_any_admin),
     db: AsyncSession = Depends(get_db)
 ):
     users_count = (await db.execute(select(func.count(User.id)))).scalar() or 0
@@ -58,11 +64,133 @@ async def get_dashboard_stats(
         open_support_tickets=open_tickets
     )
 
+# --- Staff & Access Management (ADMIN_OWNER ONLY) ---
+
+@router.get("/staff", response_model=List[StaffMemberOut])
+async def list_staff_members(
+    current_user: User = Depends(require_admin_owner),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(User).where(User.role.in_([UserRole.ADMIN_OWNER, UserRole.ADMIN_STAFF, "ADMIN_OWNER", "ADMIN_STAFF", "SECURITY_STAFF", "ADMIN"]))
+        .order_by(User.created_at.desc())
+    )
+    return result.scalars().all()
+
+@router.post("/staff/invite", status_code=status.HTTP_201_CREATED)
+async def invite_staff_member(
+    invite_in: StaffInviteRequest,
+    current_user: User = Depends(require_admin_owner),
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if user/invite already exists
+    existing = (await db.execute(select(User).where(User.email == invite_in.email))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="A user with this email address already exists.")
+
+    existing_invite = (await db.execute(select(StaffInvitation).where(StaffInvitation.email == invite_in.email, StaffInvitation.is_used == False))).scalar_one_or_none()
+    if existing_invite:
+        # Re-send or refresh invitation
+        db.delete(existing_invite)
+        await db.flush()
+
+    invitation = StaffInvitation(
+        email=invite_in.email,
+        full_name=invite_in.full_name,
+        permissions=invite_in.permissions,
+        created_by_id=current_user.id
+    )
+    db.add(invitation)
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="ADMIN_INVITE_STAFF",
+        resource="staff",
+        details={"email": invite_in.email, "full_name": invite_in.full_name, "permissions": invite_in.permissions}
+    )
+    db.add(audit)
+
+    await db.commit()
+
+    send_staff_invitation_email(
+        email=invitation.email,
+        full_name=invitation.full_name,
+        invite_token=invitation.token
+    )
+
+    return {"message": f"Staff invitation dispatched to {invitation.email}."}
+
+@router.patch("/staff/{staff_id}/permissions", response_model=StaffMemberOut)
+async def update_staff_permissions(
+    staff_id: str,
+    update_in: StaffPermissionsUpdate,
+    current_user: User = Depends(require_admin_owner),
+    db: AsyncSession = Depends(get_db)
+):
+    # Re-authentication password verification for sensitive operation
+    if not verify_password(update_in.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Sensitive Action Re-authentication Failed: Incorrect password.")
+
+    if staff_id == current_user.id:
+        raise HTTPException(status_code=400, detail="ADMIN_OWNER automatically possesses all permissions.")
+
+    result = await db.execute(select(User).where(User.id == staff_id))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Staff member not found.")
+
+    target.permissions = update_in.permissions
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="ADMIN_UPDATE_STAFF_PERMISSIONS",
+        resource="staff",
+        details={"target_staff_id": staff_id, "email": target.email, "new_permissions": update_in.permissions}
+    )
+    db.add(audit)
+    await db.commit()
+    await db.refresh(target)
+
+    return target
+
+@router.patch("/staff/{staff_id}/status", response_model=StaffMemberOut)
+async def toggle_staff_status(
+    staff_id: str,
+    update_in: StaffStatusUpdate,
+    current_user: User = Depends(require_admin_owner),
+    db: AsyncSession = Depends(get_db)
+):
+    # Re-authentication password verification for sensitive operation
+    if not verify_password(update_in.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Sensitive Action Re-authentication Failed: Incorrect password.")
+
+    if staff_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Self-protection enabled: Platform owner cannot revoke their own account.")
+
+    result = await db.execute(select(User).where(User.id == staff_id))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Staff member not found.")
+
+    target.is_active = update_in.is_active
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action=f"ADMIN_STAFF_ACCESS_{'REACTIVATED' if update_in.is_active else 'REVOKED'}",
+        resource="staff",
+        details={"target_staff_id": staff_id, "email": target.email, "is_active": update_in.is_active}
+    )
+    db.add(audit)
+    await db.commit()
+    await db.refresh(target)
+
+    return target
+
 # --- User Management ---
 
 @router.get("/users", response_model=List[UserOut])
 async def list_users(
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("view_users")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(User).order_by(User.created_at.desc()))
@@ -72,13 +200,13 @@ async def list_users(
 async def update_user_role(
     user_id: str,
     role_in: UserRoleUpdate,
-    current_user: User = Depends(require_roles([UserRole.ADMIN])),
+    current_user: User = Depends(require_admin_owner),
     db: AsyncSession = Depends(get_db)
 ):
     if user_id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Self-protection enabled: Admins cannot modify or demote their own admin role."
+            detail="Self-protection enabled: Owner role cannot be modified."
         )
 
     result = await db.execute(select(User).where(User.id == user_id))
@@ -86,7 +214,7 @@ async def update_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
-    old_role = user.role.value
+    old_role = user.role.value if hasattr(user.role, 'value') else str(user.role)
     user.role = role_in.role
 
     audit = AuditLog(
@@ -104,13 +232,13 @@ async def update_user_role(
 async def update_user_status(
     user_id: str,
     status_in: UserStatusUpdate,
-    current_user: User = Depends(require_roles([UserRole.ADMIN])),
+    current_user: User = Depends(require_permission("manage_users")),
     db: AsyncSession = Depends(get_db)
 ):
     if user_id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Self-protection enabled: Admins cannot deactivate their own account."
+            detail="Self-protection enabled: Cannot deactivate your own account."
         )
 
     result = await db.execute(select(User).where(User.id == user_id))
@@ -135,7 +263,7 @@ async def update_user_status(
 
 @router.get("/lost-items", response_model=List[LostItemOut])
 async def list_all_lost_items(
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("view_lost_items")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(LostItem).order_by(LostItem.created_at.desc()))
@@ -145,7 +273,7 @@ async def list_all_lost_items(
 async def update_lost_item_status(
     item_id: str,
     status_in: ItemStatusUpdate,
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("moderate_lost_items")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(LostItem).where(LostItem.id == item_id))
@@ -153,7 +281,7 @@ async def update_lost_item_status(
     if not item:
         raise HTTPException(status_code=404, detail="Lost item report not found.")
 
-    old_status = item.status.value
+    old_status = item.status.value if hasattr(item.status, 'value') else str(item.status)
     item.status = status_in.status
 
     audit = AuditLog(
@@ -177,7 +305,7 @@ async def update_lost_item_status(
 
 @router.get("/found-items", response_model=List[FoundItemOut])
 async def list_all_found_items(
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("view_found_items")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(FoundItem).order_by(FoundItem.created_at.desc()))
@@ -187,7 +315,7 @@ async def list_all_found_items(
 async def update_found_item_status(
     item_id: str,
     status_in: ItemStatusUpdate,
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("moderate_found_items")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(FoundItem).where(FoundItem.id == item_id))
@@ -195,7 +323,7 @@ async def update_found_item_status(
     if not item:
         raise HTTPException(status_code=404, detail="Found item report not found.")
 
-    old_status = item.status.value
+    old_status = item.status.value if hasattr(item.status, 'value') else str(item.status)
     item.status = status_in.status
 
     audit = AuditLog(
@@ -219,7 +347,7 @@ async def update_found_item_status(
 
 @router.get("/support-tickets", response_model=List[SupportTicketOut])
 async def list_support_tickets(
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("view_support")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(SupportTicket).order_by(SupportTicket.created_at.desc()))
@@ -229,7 +357,7 @@ async def list_support_tickets(
 async def update_support_ticket_status(
     ticket_id: str,
     update_in: SupportTicketStatusUpdate,
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("manage_support")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(SupportTicket).where(SupportTicket.id == ticket_id))
@@ -256,7 +384,7 @@ async def update_support_ticket_status(
 
 @router.get("/analytics/trends", response_model=AdminAnalyticsTrend)
 async def get_analytics_trends(
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("view_analytics")),
     db: AsyncSession = Depends(get_db)
 ):
     now = datetime.utcnow()
@@ -287,7 +415,7 @@ async def get_analytics_trends(
 @router.get("/audit-logs", response_model=List[AuditLogOut])
 async def get_audit_logs(
     limit: int = 100,
-    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.SECURITY_STAFF])),
+    current_user: User = Depends(require_permission("view_audit_logs")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit))

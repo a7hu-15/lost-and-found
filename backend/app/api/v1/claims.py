@@ -56,10 +56,12 @@ async def submit_claim(
     )
     return result.scalar_one()
 
+from app.security.dependencies import require_permission
+
 @router.get("/all", response_model=List[ClaimOut])
 async def list_claims(
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_roles(["ADMIN", "SECURITY_STAFF"]))
+    current_user = Depends(require_permission("view_claims"))
 ):
     result = await db.execute(
         select(Claim)
@@ -73,7 +75,7 @@ async def review_claim(
     claim_id: str,
     review_in: ClaimReview,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(require_roles(["ADMIN", "SECURITY_STAFF"]))
+    current_user = Depends(require_permission("manage_claims"))
 ):
     result = await db.execute(
         select(Claim)

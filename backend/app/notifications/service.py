@@ -45,7 +45,6 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
 
 def send_report_confirmation_email(email: str, report_id: str, access_token: str, item_title: str):
     tracking_url = f"http://localhost:5173/track?report_id={report_id}&token={access_token}"
-    
     subject = f"Lost & Found • Your Report Has Been Created ({report_id})"
     
     text_content = f"""Hello,
@@ -200,6 +199,94 @@ Campus Security Office
           <div style="font-size: 16px; font-weight: bold; margin-top: 2px;">{storage_location}</div>
           <div style="font-size: 12px; margin-top: 8px; font-family: sans-serif;">Please bring your valid Student ID card when collecting your item.</div>
         </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    send_email(email, subject, text_content, html_content)
+
+
+def send_staff_invitation_email(email: str, full_name: str, invite_token: str):
+    invite_url = f"http://localhost:5173/admin/accept-invite?token={invite_token}"
+    subject = "Campus Security Staff Access Invitation"
+
+    text_content = f"""Hello {full_name},
+
+You have been invited by the Platform Owner to join the Campus Lost & Found Administrative Staff.
+
+Complete your account setup and create your password here:
+{invite_url}
+
+NOTE: This invitation link is single-use and expires in 3 days.
+
+Campus Administration Team
+"""
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
+        .btn {{ background-color: #ff7a00; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Administrative Staff Invitation</div>
+        <p style="font-size: 13px; color: #71717a;">Hello {full_name}, you have been invited to join the staff console.</p>
+        <div style="margin: 24px 0;">
+          <a href="{invite_url}" class="btn">Set Up Password &amp; Activate Staff Account &rarr;</a>
+        </div>
+        <p style="font-size: 11px; color: #a1a1aa;">This single-use link expires in 3 days. Never share this link.</p>
+      </div>
+    </body>
+    </html>
+    """
+
+    send_email(email, subject, text_content, html_content)
+
+
+def send_password_reset_email(email: str, reset_token: str):
+    reset_url = f"http://localhost:5173/admin/reset-password?token={reset_token}"
+    subject = "Password Reset Request • Campus Lost & Found Console"
+
+    text_content = f"""Hello,
+
+We received a request to reset the password for your account ({email}).
+
+Reset your password using this secure single-use link:
+{reset_url}
+
+If you did not request a password reset, please ignore this email or contact the Platform Owner. This link expires in 2 hours.
+
+Campus Administration Security
+"""
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
+        .btn {{ background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Password Reset Request</div>
+        <p style="font-size: 13px; color: #71717a;">A password reset was requested for <strong>{email}</strong>.</p>
+        <div style="margin: 24px 0;">
+          <a href="{reset_url}" class="btn">Reset Password Now &rarr;</a>
+        </div>
+        <p style="font-size: 11px; color: #a1a1aa;">This single-use link expires in 2 hours. If you did not make this request, your account remains secure.</p>
       </div>
     </body>
     </html>
