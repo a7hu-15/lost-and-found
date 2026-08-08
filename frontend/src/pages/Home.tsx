@@ -9,7 +9,7 @@ export const Home: React.FC = () => {
       {/* Hero Section */}
       <div className="text-center space-y-3">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-          Lost & Found
+          How can we help today?
         </h1>
         <p className="text-sm font-medium text-zinc-300">
           Helping campus items find their way home.
@@ -19,50 +19,47 @@ export const Home: React.FC = () => {
         </p>
       </div>
 
-      {/* Main Journey Section: What brings you here today? */}
+      {/* Main Journey Options - Neutral SaaS Cards */}
       <div className="space-y-4">
-        <div className="text-center">
-          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-400">
-            What brings you here today?
-          </span>
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           
           {/* Journey 1: I Lost Something */}
-          <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-rose-500 hover:border-zinc-700 transition-all">
+          <div className="saas-card p-6 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all">
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">I Lost Something</h2>
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Report Missing</span>
+              <h2 className="text-base font-bold text-white tracking-tight mt-0.5">I Lost Something</h2>
               <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                 Report a missing item. We'll notify you if there's a potential match.
               </p>
             </div>
             <Link to="/report-lost" className="saas-button-primary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" />
-              Report Lost
+              Report Lost Item
             </Link>
           </div>
 
           {/* Journey 2: I Found Something */}
-          <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-emerald-500 hover:border-zinc-700 transition-all">
+          <div className="saas-card p-6 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all">
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">I Found Something</h2>
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Turn In Item</span>
+              <h2 className="text-base font-bold text-white tracking-tight mt-0.5">I Found Something</h2>
               <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                 Help return an item to its owner safely through campus security.
               </p>
             </div>
             <Link to="/report-found" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" />
-              Report Found
+              Report Found Item
             </Link>
           </div>
 
-          {/* Journey 3: I Already Submitted a Report */}
-          <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-blue-500 hover:border-zinc-700 transition-all">
+          {/* Journey 3: Track Report */}
+          <div className="saas-card p-6 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all">
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">I Already Submitted</h2>
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Check Status</span>
+              <h2 className="text-base font-bold text-white tracking-tight mt-0.5">I Already Submitted</h2>
               <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                Track report status or recover your lost Report ID anytime.
+                Track status or recover your lost Report ID anytime.
               </p>
             </div>
             <Link to="/track" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
@@ -74,16 +71,16 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Secondary Search Option Banner */}
-      <div className="saas-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-purple-500">
+      {/* Search Items Option */}
+      <div className="saas-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400">Search Directory</span>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">Directory Search</span>
           <h2 className="text-base font-bold text-white tracking-tight mt-0.5">Looking to browse all reports?</h2>
           <p className="text-xs text-zinc-400 mt-0.5">Search reported lost and found items across campus by keyword, category, or photo.</p>
         </div>
         <Link to="/search" className="saas-button-secondary text-xs py-2.5 px-5 flex items-center justify-center gap-2 shrink-0">
-          <Search className="w-4 h-4 text-purple-400" />
-          Search Directory
+          <Search className="w-4 h-4 text-zinc-400" />
+          Search Items
         </Link>
       </div>
 
@@ -124,18 +121,18 @@ export const Home: React.FC = () => {
       </div>
 
       {/* Trust Section */}
-      <div className="flex flex-wrap justify-center gap-6 font-mono text-xs text-zinc-400">
-        <div className="flex items-center gap-1.5 bg-zinc-900/50 px-3 py-1.5 rounded border border-zinc-800">
-          <Lock className="w-3.5 h-3.5 text-emerald-400" />
+      <div className="flex flex-wrap justify-center gap-6 font-mono text-xs text-zinc-500">
+        <div className="flex items-center gap-1.5">
+          <Lock className="w-3.5 h-3.5 text-zinc-400" />
           <span>Secure Reports</span>
         </div>
-        <div className="flex items-center gap-1.5 bg-zinc-900/50 px-3 py-1.5 rounded border border-zinc-800">
-          <Mail className="w-3.5 h-3.5 text-blue-400" />
+        <div className="flex items-center gap-1.5">
+          <Mail className="w-3.5 h-3.5 text-zinc-400" />
           <span>Email Updates</span>
         </div>
-        <div className="flex items-center gap-1.5 bg-zinc-900/50 px-3 py-1.5 rounded border border-zinc-800">
-          <Clock className="w-3.5 h-3.5 text-amber-400" />
-          <span>Under 60 Seconds</span>
+        <div className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 text-zinc-400" />
+          <span>Privacy First</span>
         </div>
       </div>
 
