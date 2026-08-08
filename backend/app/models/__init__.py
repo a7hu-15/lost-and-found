@@ -1,0 +1,19 @@
+from app.models.user import User, UserRole
+from app.models.lost_item import LostItem, ItemStatus
+from app.models.found_item import FoundItem
+from app.models.match import MatchScore, MatchStatus
+from app.models.claim import Claim, ClaimStatus
+from app.models.audit import AuditLog
+
+__all__ = [
+    "User",
+    "UserRole",
+    "LostItem",
+    "FoundItem",
+    "ItemStatus",
+    "MatchScore",
+    "MatchStatus",
+    "Claim",
+    "ClaimStatus",
+    "AuditLog",
+]
