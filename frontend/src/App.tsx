@@ -16,6 +16,7 @@ import { Matches } from './pages/Matches';
 import { Claims } from './pages/Claims';
 import { TrackReport } from './pages/TrackReport';
 import { RecoverReport } from './pages/RecoverReport';
+import { Support } from './pages/Support';
 import { HowItWorks } from './pages/HowItWorks';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
               <Route path="/track" element={<TrackReport />} />
               <Route path="/report/:reportId" element={<TrackReport />} />
               <Route path="/recover" element={<RecoverReport />} />
+              <Route path="/support" element={<Support />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/matches" element={<Matches />} />
               <Route path="/claims" element={<Claims />} />

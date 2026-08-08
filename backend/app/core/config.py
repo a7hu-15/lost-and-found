@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
 
     # SMTP Email Configuration
+    SUPPORT_EMAIL: str = os.getenv("SUPPORT_EMAIL", "support.lostandfound@gmail.com")
     SMTP_HOST: str = os.getenv("SMTP_HOST", "")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USER: str = os.getenv("SMTP_USER", "")
