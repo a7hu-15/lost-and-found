@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/env/
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+*.egg-info/
+
+# Databases & Local Uploads
+*.db
+*.sqlite
+*.sqlite3
+backend/lost_found.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Environment & Secrets
+.env
+.env.local
+.env.development
+.env.production
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# OS Files
+.DS_Store
+Thumbs.db

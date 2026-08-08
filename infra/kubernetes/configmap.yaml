@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudfind-config
+  namespace: default
+data:
+  PROJECT_NAME: "Cloud Lost & Found Platform"
+  STORAGE_TYPE: "local"
+  UPLOAD_DIR: "uploads"
