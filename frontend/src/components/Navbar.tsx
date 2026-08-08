@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, LogOut, LayoutDashboard, Shield, HelpCircle } from 'lucide-react';
 import { Logo } from './Logo';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -78,6 +79,10 @@ export const Navbar: React.FC = () => {
             <HelpCircle className="w-3.5 h-3.5" />
             How It Works
           </Link>
+
+          <div className="ml-1 pl-2 border-l border-zinc-800">
+            <ThemeToggle />
+          </div>
         </nav>
 
         {/* Authenticated Admin Badge Only */}
