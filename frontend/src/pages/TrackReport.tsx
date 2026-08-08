@@ -48,6 +48,32 @@ export const TrackReport: React.FC = () => {
     }
   }, [queryReportId, queryToken]);
 
+  const item = reportData ? (reportData.report || reportData) : null;
+  const matches = reportData ? (reportData.matches || []) : [];
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString();
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'REPORTED':
+        return { label: 'Searching', class: 'bg-amber-950/40 text-amber-300 border-amber-900/60' };
+      case 'MATCHED':
+        return { label: 'Possible Match', class: 'bg-blue-950/40 text-blue-300 border-blue-900/60' };
+      case 'CLAIMED':
+        return { label: 'Verification in Progress', class: 'bg-purple-950/40 text-purple-300 border-purple-900/60' };
+      case 'RETURNED':
+        return { label: 'Returned', class: 'bg-emerald-950/40 text-emerald-300 border-emerald-900/60' };
+      default:
+        return { label: status || 'Unknown', class: 'bg-zinc-900 text-zinc-400 border-zinc-800' };
+    }
+  };
+
+  const badge = item ? getStatusBadge(item.status) : null;
+
   return (
     <div className="max-w-2xl mx-auto py-8 space-y-6">
       
@@ -124,30 +150,25 @@ export const TrackReport: React.FC = () => {
       )}
 
       {/* Report Status View */}
-      {reportData && (
+      {item && (
         <div className="saas-card p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-zinc-400">ID: {reportData.report_id}</span>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${
-                  reportData.status === 'REPORTED' ? 'bg-amber-950/40 text-amber-300 border-amber-900/60' :
-                  reportData.status === 'MATCHED' ? 'bg-blue-950/40 text-blue-300 border-blue-900/60' :
-                  reportData.status === 'CLAIMED' ? 'bg-purple-950/40 text-purple-300 border-purple-900/60' :
-                  'bg-emerald-950/40 text-emerald-300 border-emerald-900/60'
-                }`}>
-                  {reportData.status === 'REPORTED' ? 'Searching' :
-                   reportData.status === 'MATCHED' ? 'Possible Match' :
-                   reportData.status === 'CLAIMED' ? 'Verification in Progress' : 'Returned'}
-                </span>
+                <span className="text-xs font-mono text-zinc-400 font-bold">ID: {item.report_id}</span>
+                {badge && (
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${badge.class}`}>
+                    {badge.label}
+                  </span>
+                )}
               </div>
-              <h2 className="text-lg font-bold text-white tracking-tight mt-1">{reportData.title}</h2>
+              <h2 className="text-lg font-bold text-white tracking-tight mt-1">{item.title}</h2>
             </div>
 
             <div className="text-xs font-mono text-zinc-400 text-right">
-              <div>Created: {new Date(reportData.created_at).toLocaleDateString()}</div>
-              <div>Category: {reportData.category}</div>
+              <div>Created: {formatDate(item.created_at)}</div>
+              <div>Category: {item.category || 'Uncategorized'}</div>
             </div>
           </div>
 
@@ -161,7 +182,7 @@ export const TrackReport: React.FC = () => {
               </div>
 
               <div className={`p-3 rounded border space-y-1 ${
-                reportData.status === 'MATCHED' || reportData.status === 'CLAIMED' || reportData.status === 'RETURNED'
+                item.status === 'MATCHED' || item.status === 'CLAIMED' || item.status === 'RETURNED'
                   ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
                   : 'bg-amber-950/40 border-amber-800 text-amber-300'
               }`}>
@@ -169,7 +190,7 @@ export const TrackReport: React.FC = () => {
               </div>
 
               <div className={`p-3 rounded border space-y-1 ${
-                reportData.status === 'CLAIMED' || reportData.status === 'RETURNED'
+                item.status === 'CLAIMED' || item.status === 'RETURNED'
                   ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-500'
               }`}>
@@ -177,7 +198,7 @@ export const TrackReport: React.FC = () => {
               </div>
 
               <div className={`p-3 rounded border space-y-1 ${
-                reportData.status === 'RETURNED'
+                item.status === 'RETURNED'
                   ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-500'
               }`}>
@@ -186,16 +207,35 @@ export const TrackReport: React.FC = () => {
             </div>
           </div>
 
+          {/* Location & Details Summary Card */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+            <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
+              <span className="text-zinc-500 text-[10px] uppercase block">Location</span>
+              <span className="text-zinc-200 font-semibold">{item.location || 'N/A'}</span>
+            </div>
+            <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
+              <span className="text-zinc-500 text-[10px] uppercase block">Date {reportData.type === 'found' ? 'Found' : 'Lost'}</span>
+              <span className="text-zinc-200 font-semibold">{item.lost_date || item.found_date || formatDate(item.created_at)}</span>
+            </div>
+          </div>
+
+          {item.description && (
+            <div className="bg-zinc-900/80 p-3.5 rounded border border-zinc-800 space-y-1 text-xs font-mono">
+              <span className="text-zinc-500 text-[10px] uppercase block">Description</span>
+              <p className="text-zinc-300 leading-relaxed whitespace-pre-line">{item.description}</p>
+            </div>
+          )}
+
           {/* Matched Items */}
-          {reportData.matches && reportData.matches.length > 0 ? (
+          {matches && matches.length > 0 ? (
             <div className="space-y-3 pt-4 border-t border-zinc-800">
               <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                Potential Matches Found ({reportData.matches.length})
+                Potential Matches Found ({matches.length})
               </h3>
 
               <div className="space-y-3">
-                {reportData.matches.map((match: any) => (
+                {matches.map((match: any) => (
                   <div key={match.id} className="bg-zinc-900 p-4 rounded border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
