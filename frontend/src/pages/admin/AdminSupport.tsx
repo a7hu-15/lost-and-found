@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { HelpCircle, Search, CheckCircle, Clock, MessageSquare, AlertCircle, Send } from 'lucide-react';
+import { HelpCircle, Search, CheckCircle, Clock, MessageSquare, AlertCircle, Send, X } from 'lucide-react';
 import api from '../../services/api';
 import { SupportTicket, TicketStatus } from '../../types';
 
@@ -60,20 +60,20 @@ export const AdminSupport: React.FC = () => {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--admin-border)] pb-4">
         <div>
-          <span className="text-[10px] font-mono text-blue-400 uppercase tracking-wider">User Assistance & Inquiries</span>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Support Ticket Center</h1>
+          <span className="text-[10px] font-mono text-blue-500 uppercase tracking-wider font-bold">User Assistance & Inquiries</span>
+          <h1 className="text-2xl font-bold text-[var(--admin-text-primary)] tracking-tight">Support Ticket Center</h1>
         </div>
-        <div className="text-xs font-mono text-zinc-400 bg-zinc-900 px-3 py-1.5 rounded border border-zinc-800 flex items-center gap-2">
-          <HelpCircle className="w-4 h-4 text-blue-400" />
+        <div className="text-xs font-mono text-[var(--admin-text-secondary)] bg-[var(--admin-surface-subtle)] px-3 py-1.5 rounded border border-[var(--admin-border)] flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-blue-500" />
           <span>Open Tickets: {tickets.filter(t => t.status === 'OPEN').length}</span>
         </div>
       </div>
 
       {actionMessage && (
-        <div className="bg-emerald-950/50 border border-emerald-800 text-emerald-300 text-xs p-3 rounded font-mono flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs p-3 rounded font-mono flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
           <span>{actionMessage}</span>
         </div>
       )}
@@ -81,20 +81,20 @@ export const AdminSupport: React.FC = () => {
       {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--admin-text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search support tickets by Ticket ID, sender, email, or subject..."
-            className="saas-input w-full pl-9 pr-3 py-2 text-xs"
+            className="admin-input w-full pl-9 pr-3 py-2 text-xs"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="saas-input py-2 px-3 text-xs w-full sm:w-48"
+          className="admin-input py-2 px-3 text-xs w-full sm:w-48"
         >
           <option value="ALL">All Statuses</option>
           <option value="OPEN">OPEN</option>
@@ -105,65 +105,65 @@ export const AdminSupport: React.FC = () => {
 
       {/* Tickets List */}
       {loading ? (
-        <div className="saas-card p-12 text-center text-xs font-mono text-zinc-500">
+        <div className="admin-card p-12 text-center text-xs font-mono text-[var(--admin-text-muted)]">
           Loading support tickets...
         </div>
       ) : filteredTickets.length === 0 ? (
-        <div className="saas-card p-8 text-center text-xs font-mono text-zinc-500">
+        <div className="admin-card p-8 text-center text-xs font-mono text-[var(--admin-text-muted)]">
           No support tickets match the search query.
         </div>
       ) : (
         <div className="space-y-4">
           {filteredTickets.map((ticket) => (
-            <div key={ticket.id} className="saas-card p-5 space-y-4">
+            <div key={ticket.id} className="admin-card p-5 space-y-4">
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--admin-border)] pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-blue-400 font-bold">{ticket.ticket_id}</span>
-                    <span className="text-[10px] font-mono text-zinc-500">• {new Date(ticket.created_at).toLocaleString()}</span>
+                    <span className="font-mono text-xs text-amber-600 dark:text-amber-400 font-bold">{ticket.ticket_id}</span>
+                    <span className="text-[10px] font-mono text-[var(--admin-text-muted)]">• {new Date(ticket.created_at).toLocaleString()}</span>
                   </div>
-                  <h3 className="text-sm font-semibold text-white mt-0.5">{ticket.subject}</h3>
+                  <h3 className="text-base font-bold text-[var(--admin-text-primary)] mt-0.5">{ticket.subject}</h3>
                 </div>
 
                 <span className={`text-xs font-mono px-2.5 py-1 rounded border uppercase font-bold self-start sm:self-center ${
-                  ticket.status === 'OPEN' ? 'bg-rose-950/40 text-rose-300 border-rose-900/60' :
-                  ticket.status === 'IN_PROGRESS' ? 'bg-amber-950/40 text-amber-300 border-amber-900/60' :
-                  'bg-emerald-950/40 text-emerald-300 border-emerald-900/60'
+                  ticket.status === 'OPEN' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30' :
+                  ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30' :
+                  'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
                 }`}>
                   {ticket.status}
                 </span>
               </div>
 
-              {/* Sender Details */}
-              <div className="bg-zinc-900/80 p-3.5 rounded border border-zinc-800 text-xs space-y-2 font-mono">
-                <div className="flex flex-wrap gap-4 text-zinc-400 border-b border-zinc-800/80 pb-2">
-                  <div>Sender: <strong className="text-white">{ticket.name}</strong></div>
-                  <div>Email: <strong className="text-zinc-200">{ticket.email}</strong></div>
-                  {ticket.ip_address && <div>IP: <span className="text-zinc-500">{ticket.ip_address}</span></div>}
+              {/* Sender Details - High Contrast */}
+              <div className="bg-[var(--admin-surface-subtle)] p-4 rounded-md border border-[var(--admin-border)] text-xs space-y-3 font-sans">
+                <div className="flex flex-wrap gap-4 text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)] pb-2 font-mono">
+                  <div>Sender: <strong className="text-[var(--admin-text-primary)]">{ticket.name}</strong></div>
+                  <div>Email: <strong className="text-[var(--admin-text-primary)]">{ticket.email}</strong></div>
+                  {ticket.ip_address && <div>IP: <span className="text-[var(--admin-text-muted)]">{ticket.ip_address}</span></div>}
                 </div>
 
                 <div>
-                  <span className="text-zinc-500 block text-[10px] uppercase">Message Content:</span>
-                  <p className="text-zinc-200 font-sans mt-1 whitespace-pre-line text-xs leading-relaxed">
+                  <span className="text-[var(--admin-text-muted)] block text-[10px] font-mono uppercase font-bold mb-1">MESSAGE CONTENT:</span>
+                  <p className="text-[var(--admin-text-primary)] font-medium text-xs leading-relaxed whitespace-pre-line bg-[var(--admin-surface)] p-3 rounded border border-[var(--admin-border)]">
                     {ticket.message}
                   </p>
                 </div>
 
                 {ticket.admin_notes && (
-                  <div className="pt-2 border-t border-zinc-800/80">
-                    <span className="text-amber-400 block text-[10px] uppercase font-bold">Admin Resolution Notes:</span>
-                    <p className="text-zinc-300 font-sans mt-0.5 text-xs">{ticket.admin_notes}</p>
+                  <div className="pt-2 border-t border-[var(--admin-border)]">
+                    <span className="text-amber-600 dark:text-amber-400 block text-[10px] font-mono uppercase font-bold">ADMIN RESOLUTION NOTES:</span>
+                    <p className="text-[var(--admin-text-primary)] font-medium text-xs mt-0.5">{ticket.admin_notes}</p>
                   </div>
                 )}
               </div>
 
-              {/* Status Update Actions */}
+              {/* Status Update Actions - Crisp Buttons */}
               <div className="flex flex-wrap gap-2 justify-end pt-1">
                 {ticket.status !== 'IN_PROGRESS' && (
                   <button
                     onClick={() => handleUpdateTicketStatus(ticket.id, 'IN_PROGRESS')}
-                    className="saas-button-secondary text-xs py-1.5 px-3 hover:text-amber-400"
+                    className="admin-button-secondary text-xs py-1.5 px-3 hover:text-amber-500"
                   >
                     Mark In Progress
                   </button>
@@ -174,7 +174,7 @@ export const AdminSupport: React.FC = () => {
                       setSelectedTicket(ticket);
                       setAdminNotes(ticket.admin_notes || '');
                     }}
-                    className="saas-button-primary text-xs py-1.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white"
+                    className="admin-btn-success text-xs py-2 px-4"
                   >
                     Resolve Ticket
                   </button>
@@ -182,7 +182,7 @@ export const AdminSupport: React.FC = () => {
                 {ticket.status === 'RESOLVED' && (
                   <button
                     onClick={() => handleUpdateTicketStatus(ticket.id, 'OPEN')}
-                    className="saas-button-secondary text-xs py-1.5 px-3 hover:text-rose-400"
+                    className="admin-button-secondary text-xs py-1.5 px-3 hover:text-rose-500"
                   >
                     Reopen Ticket
                   </button>
@@ -197,35 +197,37 @@ export const AdminSupport: React.FC = () => {
       {/* Resolution Notes Modal */}
       {selectedTicket && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="saas-card max-w-md w-full p-6 space-y-4 bg-[#121215] border-zinc-700">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-base font-bold text-white tracking-tight">Resolve Support Ticket</h3>
-              <button onClick={() => setSelectedTicket(null)} className="text-zinc-500 hover:text-white">✕</button>
+          <div className="admin-card max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-3">
+              <h3 className="text-base font-bold text-[var(--admin-text-primary)] tracking-tight">Resolve Support Ticket</h3>
+              <button onClick={() => setSelectedTicket(null)} className="text-[var(--admin-text-muted)] hover:text-[var(--admin-text-primary)]">
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="bg-zinc-900 p-3 rounded border border-zinc-800 text-xs font-mono">
-              <div>Ticket ID: <span className="text-blue-400 font-bold">{selectedTicket.ticket_id}</span></div>
-              <div>Subject: <span className="text-white">{selectedTicket.subject}</span></div>
+            <div className="bg-[var(--admin-surface-subtle)] p-3 rounded border border-[var(--admin-border)] text-xs font-mono">
+              <div>Ticket ID: <span className="text-amber-500 font-bold">{selectedTicket.ticket_id}</span></div>
+              <div>Subject: <span className="text-[var(--admin-text-primary)] font-semibold">{selectedTicket.subject}</span></div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Resolution Notes / Action Taken</label>
+              <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">Resolution Notes / Action Taken</label>
               <textarea
                 rows={4}
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder="Describe how the user inquiry was addressed or resolved..."
-                className="saas-input w-full p-2.5 text-xs"
+                className="admin-input w-full p-2.5 text-xs"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
-              <button onClick={() => setSelectedTicket(null)} className="saas-button-secondary text-xs py-1.5 px-3">
+            <div className="flex justify-end gap-2 pt-2 border-t border-[var(--admin-border)]">
+              <button onClick={() => setSelectedTicket(null)} className="admin-button-secondary text-xs py-1.5 px-3">
                 Cancel
               </button>
               <button
                 onClick={() => handleUpdateTicketStatus(selectedTicket.id, 'RESOLVED', adminNotes)}
-                className="saas-button-primary text-xs py-1.5 px-4 bg-emerald-600 hover:bg-emerald-500"
+                className="admin-btn-success text-xs py-1.5 px-4"
               >
                 Confirm Resolution
               </button>

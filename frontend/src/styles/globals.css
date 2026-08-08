@@ -14,16 +14,16 @@
 
   /* Admin Dark Mode System Tokens */
   --admin-bg: #090909;
-  --admin-surface: #151515;
-  --admin-surface-subtle: #1C1C1C;
-  --admin-border: #292929;
+  --admin-surface: #141414;
+  --admin-surface-subtle: #1F1F1F;
+  --admin-border: #2E2E2E;
   --admin-text-primary: #F5F5F5;
-  --admin-text-secondary: #B5B5B5;
-  --admin-text-muted: #858585;
-  --admin-accent: #FF8A00;
-  --admin-accent-hover: #FF9A2E;
-  --admin-active-bg: #242424;
-  --admin-active-text: #FF9A2E;
+  --admin-text-secondary: #C5C5C5;
+  --admin-text-muted: #8E8E8E;
+  --admin-accent: #D97706;
+  --admin-accent-hover: #F59E0B;
+  --admin-active-bg: #2B2315;
+  --admin-active-text: #FBBF24;
 }
 
 html.light {
@@ -37,17 +37,17 @@ html.light {
   --input-bg: #F4F4F5;
 
   /* Admin Light Mode System Tokens */
-  --admin-bg: #F7F7F8;
+  --admin-bg: #F8F9FA;
   --admin-surface: #FFFFFF;
-  --admin-surface-subtle: #F2F2F4;
-  --admin-border: #E2E2E5;
-  --admin-text-primary: #171717;
-  --admin-text-secondary: #666666;
-  --admin-text-muted: #8A8A8A;
-  --admin-accent: #FF7A00;
-  --admin-accent-hover: #E66D00;
-  --admin-active-bg: #FFF1E5;
-  --admin-active-text: #D95F00;
+  --admin-surface-subtle: #F1F3F5;
+  --admin-border: #DCE1E7;
+  --admin-text-primary: #111827;
+  --admin-text-secondary: #4B5563;
+  --admin-text-muted: #6B7280;
+  --admin-accent: #D97706;
+  --admin-accent-hover: #B45309;
+  --admin-active-bg: #FEF3C7;
+  --admin-active-text: #B45309;
 }
 
 @layer base {
@@ -69,47 +69,89 @@ html.light {
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.admin-button-primary {
-  background-color: var(--admin-accent);
+.admin-button-primary,
+.admin-btn-primary {
+  background-color: var(--admin-accent) !important;
   color: #FFFFFF !important;
   font-weight: 600;
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 13px;
   transition: opacity 0.15s ease, background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.admin-button-primary:hover {
+.admin-button-primary:hover,
+.admin-btn-primary:hover {
   opacity: 0.92;
 }
 
-.admin-button-secondary {
-  background-color: var(--admin-surface-subtle);
+.admin-btn-success {
+  background-color: #059669 !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: opacity 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-btn-success:hover {
+  opacity: 0.92;
+}
+
+.admin-btn-danger {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: opacity 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-btn-danger:hover {
+  opacity: 0.92;
+}
+
+.admin-button-secondary,
+.admin-btn-secondary {
+  background-color: var(--admin-surface-subtle) !important;
   color: var(--admin-text-primary) !important;
-  border: 1px solid var(--admin-border);
+  border: 1px solid var(--admin-border) !important;
   font-weight: 500;
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 13px;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.admin-button-secondary:hover {
-  border-color: var(--admin-accent);
+.admin-button-secondary:hover,
+.admin-btn-secondary:hover {
+  border-color: var(--admin-accent) !important;
 }
 
 .admin-input {
-  background-color: var(--admin-surface-subtle);
-  border: 1px solid var(--admin-border);
+  background-color: var(--admin-surface-subtle) !important;
+  border: 1px solid var(--admin-border) !important;
   border-radius: 6px;
-  color: var(--admin-text-primary);
+  color: var(--admin-text-primary) !important;
   font-size: 13px;
   transition: border-color 0.15s ease;
 }
 
 .admin-input:focus {
   outline: none;
-  border-color: var(--admin-accent);
+  border-color: var(--admin-accent) !important;
 }
 
 /* Linear / Vercel Enterprise Public SaaS UI Components */
