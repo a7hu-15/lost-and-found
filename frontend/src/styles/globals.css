@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #09090b;
+    color: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+/* Linear / Vercel Enterprise SaaS UI Components */
+
+.saas-card {
+  background-color: #111113;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.saas-card:hover {
+  border-color: #3f3f46;
+}
+
+.saas-button-primary {
+  background-color: #fafafa;
+  color: #09090b;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.saas-button-primary:hover {
+  background-color: #e4e4e7;
+}
+
+.saas-button-secondary {
+  background-color: #18181b;
+  color: #fafafa;
+  border: 1px solid #27272a;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.saas-button-secondary:hover {
+  background-color: #27272a;
+  border-color: #3f3f46;
+}
+
+.saas-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #27272a;
+  background-color: #18181b;
+  color: #a1a1aa;
+}
+
+.saas-input {
+  background-color: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  color: #fafafa;
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+
+.saas-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
