@@ -19,65 +19,72 @@ export const Home: React.FC = () => {
         </p>
       </div>
 
-      {/* Four Equal Action Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        
-        {/* 1. Lost Something */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-rose-500 hover:border-zinc-700 transition-all">
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">Lost Something?</h2>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              We'll keep an eye out.
-            </p>
-          </div>
-          <Link to="/report-lost" className="saas-button-primary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
-            <Plus className="w-4 h-4" />
-            Report Lost Item
-          </Link>
+      {/* Main Journey Section: What brings you here today? */}
+      <div className="space-y-4">
+        <div className="text-center">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-400">
+            What brings you here today?
+          </span>
         </div>
 
-        {/* 2. Found Something */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-emerald-500 hover:border-zinc-700 transition-all">
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">Found Something?</h2>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Help return an item safely through the campus security office.
-            </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          
+          {/* Journey 1: I Lost Something */}
+          <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-rose-500 hover:border-zinc-700 transition-all">
+            <div>
+              <h2 className="text-base font-bold text-white tracking-tight">I Lost Something</h2>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                Report a missing item. We'll notify you if there's a potential match.
+              </p>
+            </div>
+            <Link to="/report-lost" className="saas-button-primary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
+              <Plus className="w-4 h-4" />
+              Report Lost
+            </Link>
           </div>
-          <Link to="/report-found" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
-            <Plus className="w-4 h-4" />
-            Report Found Item
-          </Link>
-        </div>
 
-        {/* 3. Looking for Something */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-purple-500 hover:border-zinc-700 transition-all">
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">Looking for Something?</h2>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Search reported lost and found items across campus.
-            </p>
+          {/* Journey 2: I Found Something */}
+          <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-emerald-500 hover:border-zinc-700 transition-all">
+            <div>
+              <h2 className="text-base font-bold text-white tracking-tight">I Found Something</h2>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                Help return an item to its owner safely through campus security.
+              </p>
+            </div>
+            <Link to="/report-found" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
+              <Plus className="w-4 h-4" />
+              Report Found
+            </Link>
           </div>
-          <Link to="/search" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
-            <Search className="w-4 h-4 text-purple-400" />
-            Search Items
-          </Link>
-        </div>
 
-        {/* 4. Already Submitted a Report */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-blue-500 hover:border-zinc-700 transition-all">
-          <div>
-            <h2 className="text-base font-bold text-white tracking-tight">Already Submitted a Report?</h2>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Check your latest report status anytime.
-            </p>
+          {/* Journey 3: I Already Submitted a Report */}
+          <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-blue-500 hover:border-zinc-700 transition-all">
+            <div>
+              <h2 className="text-base font-bold text-white tracking-tight">I Already Submitted</h2>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                Track report status or recover your lost Report ID anytime.
+              </p>
+            </div>
+            <Link to="/track" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
+              <Shield className="w-4 h-4 text-blue-400" />
+              Track Report
+            </Link>
           </div>
-          <Link to="/track" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
-            <Shield className="w-4 h-4 text-blue-400" />
-            Track Report
-          </Link>
-        </div>
 
+        </div>
+      </div>
+
+      {/* Secondary Search Option Banner */}
+      <div className="saas-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-purple-500">
+        <div>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400">Search Directory</span>
+          <h2 className="text-base font-bold text-white tracking-tight mt-0.5">Looking to browse all reports?</h2>
+          <p className="text-xs text-zinc-400 mt-0.5">Search reported lost and found items across campus by keyword, category, or photo.</p>
+        </div>
+        <Link to="/search" className="saas-button-secondary text-xs py-2.5 px-5 flex items-center justify-center gap-2 shrink-0">
+          <Search className="w-4 h-4 text-purple-400" />
+          Search Directory
+        </Link>
       </div>
 
       {/* How It Works Section */}
