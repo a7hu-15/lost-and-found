@@ -47,21 +47,24 @@ export const Matches: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="saas-card p-8 text-center text-zinc-500 text-xs font-mono">
-          Calculating match vectors...
+        <div className="saas-card p-12 text-center text-xs font-mono text-zinc-500">
+          Calculating match matrix...
         </div>
       ) : matches.length === 0 ? (
-        <div className="saas-card p-8 text-center text-zinc-500 text-xs font-mono">
-          No matches identified above 50% threshold.
+        <div className="saas-card p-8 text-center text-xs font-mono text-zinc-500">
+          No automated matches found exceeding confidence threshold (50%).
         </div>
       ) : (
         <div className="space-y-4">
           {matches.map((match) => (
             <div key={match.id} className="saas-card p-5 space-y-4">
               
-              {/* Match Header & Score Meter */}
-              <div className="border-b border-zinc-800/80 pb-3">
+              {/* Header Match Meter */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
                 <SimilarityMeter score={match.similarity_score} breakdown={match.breakdown_json} />
+                <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 px-2.5 py-1 rounded border border-zinc-800 self-start sm:self-center">
+                  Match Score #{match.id.slice(0, 8)}
+                </span>
               </div>
 
               {/* Side by Side Comparison Grid */}
@@ -79,9 +82,9 @@ export const Matches: React.FC = () => {
                     {match.lost_item?.description}
                   </p>
                   <div className="text-[11px] text-zinc-400 space-y-0.5 font-mono">
-                    <div>Category: <span className="text-zinc-200">{match.lost_item?.category}</span></div>
-                    <div>Location: <span className="text-zinc-200">{match.lost_item?.location}</span></div>
-                    <div>Date: <span className="text-zinc-200">{match.lost_item?.lost_date}</span></div>
+                    <div>Category: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.category}</span></div>
+                    <div>Location: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.location}</span></div>
+                    <div>Date: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.lost_date}</span></div>
                   </div>
                 </div>
 
@@ -97,9 +100,9 @@ export const Matches: React.FC = () => {
                     {match.found_item?.description}
                   </p>
                   <div className="text-[11px] text-zinc-400 space-y-0.5 font-mono">
-                    <div>Category: <span className="text-zinc-200">{match.found_item?.category}</span></div>
-                    <div>Location: <span className="text-zinc-200">{match.found_item?.location}</span></div>
-                    <div>Holding: <span className="text-zinc-200">{match.found_item?.storage_location}</span></div>
+                    <div>Category: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.category}</span></div>
+                    <div>Location: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.location}</span></div>
+                    <div>Holding: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.storage_location}</span></div>
                   </div>
                 </div>
 
@@ -108,15 +111,14 @@ export const Matches: React.FC = () => {
               {/* Action Footer */}
               <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
                 <span className="text-xs font-mono text-zinc-400">
-                  Status: <span className="text-zinc-200">{match.status}</span>
+                  Status: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.status}</span>
                 </span>
 
                 <button
                   onClick={() => handleInitiateClaim(match)}
-                  className="saas-button-secondary text-xs flex items-center gap-1.5"
+                  className="saas-button-primary text-xs py-2 px-4 flex items-center gap-1.5"
                 >
-                  Initiate Claim Verification
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Initiate Claim <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 

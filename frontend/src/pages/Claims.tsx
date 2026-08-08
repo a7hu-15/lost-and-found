@@ -104,9 +104,9 @@ export const Claims: React.FC = () => {
         </div>
 
         <div className="text-xs text-zinc-400 font-mono space-y-1">
-          <div>Category: <span className="text-zinc-200">{foundItem.category}</span></div>
-          <div>Where Found: <span className="text-zinc-200">{foundItem.location}</span></div>
-          <div>Holding Desk: <span className="text-zinc-200">{foundItem.storage_location}</span></div>
+          <div>Category: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.category}</span></div>
+          <div>Where Found: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.location}</span></div>
+          <div>Holding Desk: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.storage_location}</span></div>
         </div>
       </div>
 

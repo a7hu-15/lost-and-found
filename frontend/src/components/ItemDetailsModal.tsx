@@ -21,15 +21,15 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'REPORTED':
-        return { label: 'Searching', class: 'bg-amber-950/40 text-amber-300 border-amber-900/50' };
+        return { label: 'Searching', class: 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30' };
       case 'MATCHED':
-        return { label: 'Possible Match', class: 'bg-blue-950/40 text-blue-300 border-blue-900/50' };
+        return { label: 'Possible Match', class: 'bg-blue-500/15 text-blue-800 dark:text-blue-300 border-blue-500/30' };
       case 'CLAIMED':
-        return { label: 'Verification in Progress', class: 'bg-purple-950/40 text-purple-300 border-purple-900/50' };
+        return { label: 'Verification in Progress', class: 'bg-purple-500/15 text-purple-800 dark:text-purple-300 border-purple-500/30' };
       case 'RETURNED':
-        return { label: 'Returned', class: 'bg-emerald-950/40 text-emerald-300 border-emerald-900/50' };
+        return { label: 'Returned', class: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30' };
       default:
-        return { label: status, class: 'bg-zinc-900 text-zinc-400 border-zinc-800' };
+        return { label: status, class: 'bg-zinc-500/15 text-zinc-800 dark:text-zinc-300 border-zinc-500/30' };
     }
   };
 
@@ -42,32 +42,32 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-white bg-zinc-900 rounded-full border border-zinc-800 transition-colors"
+          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-white bg-zinc-900 dark:bg-zinc-900 rounded-full border border-zinc-800 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Header Badges */}
         <div className="flex items-center gap-2">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${
             isLost 
-              ? 'bg-rose-950/30 text-rose-300 border-rose-900/50' 
-              : 'bg-emerald-950/30 text-emerald-300 border-emerald-900/50'
+              ? 'bg-rose-500/15 text-rose-800 dark:text-rose-300 border-rose-500/30' 
+              : 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30'
           }`}>
             {isLost ? 'Lost Item' : 'Found Item'}
           </span>
 
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${badge.class}`}>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${badge.class}`}>
             {badge.label}
           </span>
 
-          <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+          <span className="text-xs font-mono text-zinc-700 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 font-semibold">
             {item.report_id}
           </span>
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-white tracking-tight">{item.title}</h2>
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">{item.title}</h2>
 
         {/* Main Large Image */}
         {item.image_url ? (
@@ -75,49 +75,49 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
             <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className="w-full h-32 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600 font-mono text-xs gap-1.5">
-            <ImageIcon className="w-5 h-5 text-zinc-700" />
+          <div className="w-full h-32 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 font-mono text-xs gap-1.5 font-medium">
+            <ImageIcon className="w-5 h-5 text-zinc-400" />
             No Image Available
           </div>
         )}
 
         {/* Key Attributes Grid */}
         <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
-            <span className="text-zinc-500 text-[10px] uppercase block">Category</span>
-            <span className="text-zinc-200 font-semibold">{item.category}</span>
+          <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+            <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase block font-semibold">Category</span>
+            <span className="text-zinc-900 dark:text-zinc-100 font-semibold block">{item.category}</span>
           </div>
 
-          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
-            <span className="text-zinc-500 text-[10px] uppercase block">Location</span>
-            <span className="text-zinc-200 font-semibold truncate block">{item.location}</span>
+          <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+            <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase block font-semibold">Location</span>
+            <span className="text-zinc-900 dark:text-zinc-100 font-semibold truncate block">{item.location}</span>
           </div>
 
-          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
-            <span className="text-zinc-500 text-[10px] uppercase block">Date {isLost ? 'Lost' : 'Found'}</span>
-            <span className="text-zinc-200 font-semibold">{dateStr}</span>
+          <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+            <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase block font-semibold">Date {isLost ? 'Lost' : 'Found'}</span>
+            <span className="text-zinc-900 dark:text-zinc-100 font-semibold block">{dateStr}</span>
           </div>
 
-          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
-            <span className="text-zinc-500 text-[10px] uppercase block">Status</span>
-            <span className="text-zinc-200 font-semibold">{badge.label}</span>
+          <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-0.5">
+            <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase block font-semibold">Status</span>
+            <span className="text-zinc-900 dark:text-zinc-100 font-semibold block">{badge.label}</span>
           </div>
         </div>
 
         {!isLost && (
-          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 text-xs font-mono flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 text-xs font-mono flex items-center gap-2">
+            <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <div>
-              <span className="text-zinc-500 text-[10px] uppercase block">Campus Storage Location</span>
-              <span className="text-zinc-200 font-medium">{foundItem.storage_location}</span>
+              <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase block font-semibold">Campus Storage Location</span>
+              <span className="text-zinc-900 dark:text-zinc-100 font-semibold block">{foundItem.storage_location}</span>
             </div>
           </div>
         )}
 
         {/* Full Description */}
-        <div className="bg-zinc-900/80 p-3.5 rounded border border-zinc-800 space-y-1">
-          <span className="text-zinc-500 text-[10px] uppercase font-mono block">Description</span>
-          <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{item.description}</p>
+        <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3.5 rounded border border-zinc-200 dark:border-zinc-800 space-y-1">
+          <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase font-mono block font-semibold">Description</span>
+          <p className="text-xs text-zinc-900 dark:text-zinc-200 leading-relaxed whitespace-pre-line font-medium">{item.description}</p>
         </div>
 
         {/* Action Buttons */}
