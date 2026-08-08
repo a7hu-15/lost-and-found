@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, CheckCircle2, Lock, ExternalLink, Link2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Upload, Sparkles, ExternalLink, Lock } from 'lucide-react';
 import api from '../services/api';
 import { ImageUploader } from '../components/ImageUploader';
 
 export const ReportFound: React.FC = () => {
-  const locationState = useLocation();
-  const linkedLostItem = (locationState.state as { linkedLostItem?: any })?.linkedLostItem;
+  const locationState = useLocation().state as { linkedLostItem?: any } | undefined;
+  const linkedLostItem = locationState?.linkedLostItem;
 
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Form Data
-  const [title, setTitle] = useState(linkedLostItem ? `Found ${linkedLostItem.title}` : '');
-  const [category, setCategory] = useState(linkedLostItem ? linkedLostItem.category : 'Electronics');
-  const [brand, setBrand] = useState(linkedLostItem ? linkedLostItem.brand || '' : '');
-  const [color, setColor] = useState(linkedLostItem ? linkedLostItem.color || '' : '');
-  const [location, setLocation] = useState(linkedLostItem ? linkedLostItem.location : '');
+  // Form State
+  const [category, setCategory] = useState(linkedLostItem?.category || '');
+  const [brand, setBrand] = useState(linkedLostItem?.brand || '');
+  const [color, setColor] = useState(linkedLostItem?.color || '');
+  const [title, setTitle] = useState(linkedLostItem?.title || '');
+  const [location, setLocation] = useState(linkedLostItem?.location || '');
   const [foundDate, setFoundDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [storageLocation, setStorageLocation] = useState('Campus Security Office - Gate 1');
@@ -24,19 +26,6 @@ export const ReportFound: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [createdItem, setCreatedItem] = useState<{ report_id: string; access_token: string } | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const categories = [
-    'Electronics',
-    'Laptop',
-    'Wallet',
-    'Bottle',
-    'Bag',
-    'Phone',
-    'Keys',
-    'ID Card'
-  ];
 
   const storageOptions = [
     'Campus Security Office - Gate 1',
@@ -52,10 +41,37 @@ export const ReportFound: React.FC = () => {
     if (detected.color) setColor(detected.color);
   };
 
+  const handleNextFromStep2 = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (foundDate > todayStr) {
+      setError('Date Found cannot be in the future.');
+      return;
+    }
+    setError('');
+    setStep(3);
+  };
+
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (foundDate > todayStr) {
+      setError('Date Found cannot be in the future.');
+      return;
+    }
+
+    if (contactPhone && contactPhone.trim()) {
+      const phoneStr = contactPhone.trim();
+      const digits = phoneStr.replace(/\D/g, '');
+      const phoneRegex = /^\+?[0-9\s\-\(\)]{7,15}$/;
+      if (!phoneRegex.test(phoneStr) || digits.length < 7 || digits.length > 15) {
+        setError('Please enter a valid phone number (7–15 digits) or leave the field blank.');
+        return;
+      }
+    }
+
+    setLoading(true);
 
     try {
       const formData = new FormData();
@@ -81,7 +97,7 @@ export const ReportFound: React.FC = () => {
         access_token: res.data.access_token
       });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to submit found item report.');
+      setError(err.response?.data?.detail || 'Failed to submit report. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -124,7 +140,7 @@ export const ReportFound: React.FC = () => {
           </div>
 
           <p className="text-[11px] text-zinc-500">
-            Please hand the physical item to <strong>{storageLocation}</strong>.
+            Thank you for turning in a found item. Campus Security will inspect the item and match it against owner reports.
           </p>
 
           <div className="flex flex-col gap-2 pt-2">
@@ -132,7 +148,7 @@ export const ReportFound: React.FC = () => {
               href={trackingUrl}
               className="saas-button-primary text-xs py-2.5 flex items-center justify-center gap-1.5"
             >
-              Open Tracking Link <ExternalLink className="w-3.5 h-3.5" />
+              Open Report Receipt <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a
               href="/"
@@ -149,7 +165,7 @@ export const ReportFound: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto py-8 space-y-6">
       
-      {/* Wizard Progress Bar */}
+      {/* Progress Bar */}
       <div className="saas-card p-4 flex items-center justify-between font-mono text-xs">
         <span className="text-zinc-300 font-semibold">Report Found Item</span>
         <span className="text-zinc-400">
@@ -163,74 +179,80 @@ export const ReportFound: React.FC = () => {
         </span>
       </div>
 
+      {linkedLostItem && (
+        <div className="bg-blue-950/40 border border-blue-900/60 text-blue-300 text-xs p-3.5 rounded flex items-center gap-2 font-mono">
+          <Sparkles className="w-4 h-4 shrink-0 text-blue-400" />
+          <span>Linking to Lost Item Report: {linkedLostItem.report_id}</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs p-3.5 rounded flex items-center gap-2 font-mono">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Main Card Container */}
       <div className="saas-card p-6 sm:p-8 space-y-6">
         
-        {linkedLostItem && (
-          <div className="bg-emerald-950/40 border border-emerald-800/60 p-3 rounded text-xs font-mono text-emerald-300 flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <div>
-              <span className="font-semibold block">Linking to Lost Item Report: {linkedLostItem.report_id}</span>
-              <span className="text-[11px] text-emerald-400/80">Item: {linkedLostItem.title} | Location: {linkedLostItem.location}</span>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs p-3 rounded font-mono">
-            {error}
-          </div>
-        )}
-
-        {/* STEP 1: UPLOAD PHOTOS + CATEGORY */}
+        {/* STEP 1: ITEM PHOTO & TITLE */}
         {step === 1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Step 1: What item was found?</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Upload a clear photo of the item and select category</p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Step 1: Upload photo of found item</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Photo upload is required for found item logging</p>
             </div>
 
-            {/* Drag & Drop Photo Upload */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-2">Upload Clear Photo * (Required)</label>
-              <ImageUploader
-                onImageChange={setUploadedFile}
-                onAIDetect={handleAIDetected}
-                isRequired={true}
-                selectedCategory={category}
-              />
-            </div>
+            <ImageUploader
+              onImageChange={setUploadedFile}
+              onAIDetect={handleAIDetected}
+            />
 
-            {/* Item Title */}
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Item Name *</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Item Title / Category Name *</label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Silver AirPods Pro Case"
+                placeholder="e.g. Silver Macbook Pro 14-inch"
                 className="saas-input w-full py-2 px-3"
               />
             </div>
 
-            {/* Category Pills */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-2">Category *</label>
-              <div className="grid grid-cols-4 gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={`py-2 px-3 rounded border text-xs font-medium text-center transition-all ${
-                      category === cat
-                        ? 'bg-white text-black border-white font-bold'
-                        : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">Category</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Electronics"
+                  className="saas-input w-full py-2 px-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">Brand (Optional)</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="Apple"
+                  className="saas-input w-full py-2 px-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">Color (Optional)</label>
+                <input
+                  type="text"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  placeholder="Silver"
+                  className="saas-input w-full py-2 px-3"
+                />
               </div>
             </div>
 
@@ -241,7 +263,7 @@ export const ReportFound: React.FC = () => {
                 onClick={() => setStep(2)}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
-                Next: Location & Holding Desk <ArrowRight className="w-3.5 h-3.5" />
+                Next: Location &amp; Holding Desk <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -251,7 +273,7 @@ export const ReportFound: React.FC = () => {
         {step === 2 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Step 2: Where was it found & where is it now?</h2>
+              <h2 className="text-lg font-bold text-white tracking-tight">Step 2: Where was it found &amp; where is it now?</h2>
               <p className="text-xs text-zinc-400 mt-0.5">Specify discovery location and holding office</p>
             </div>
 
@@ -272,6 +294,7 @@ export const ReportFound: React.FC = () => {
               <input
                 type="date"
                 required
+                max={new Date().toISOString().split('T')[0]}
                 value={foundDate}
                 onChange={(e) => setFoundDate(e.target.value)}
                 className="saas-input w-full py-2 px-3"
@@ -308,31 +331,31 @@ export const ReportFound: React.FC = () => {
               <button
                 type="button"
                 disabled={!location.trim()}
-                onClick={() => setStep(3)}
+                onClick={handleNextFromStep2}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
-                Next: Physical Details <ArrowRight className="w-3.5 h-3.5" />
+                Next: Description &amp; Marks <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: PHYSICAL DETAILS */}
+        {/* STEP 3: ITEM DESCRIPTION */}
         {step === 3 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Step 3: Description & Physical Condition</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Describe item condition without disclosing sensitive secrets</p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Step 3: Item Description</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Describe visible condition and any distinguishing features</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Description & Notes *</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Description *</label>
               <textarea
                 required
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Physical condition, color, key details..."
+                placeholder="e.g. Found on table 14 after lunch rush. Silver case, scratch on bottom left corner."
                 className="saas-input w-full p-3"
               />
             </div>
@@ -351,22 +374,22 @@ export const ReportFound: React.FC = () => {
                 onClick={() => setStep(4)}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
-                Next: Contact Info <ArrowRight className="w-3.5 h-3.5" />
+                Next: Your Contact Details <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 4: CONTACT INFO */}
+        {/* STEP 4: CONTACT DETAILS */}
         {step === 4 && (
           <form onSubmit={handleFinalSubmit} className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Step 4: Contact Information</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Where should status notifications be sent?</p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Step 4: Your Contact Information</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Required for item receipt and audit logging</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Contact Email * (Never shared publicly)</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Email Address * (Never shared publicly)</label>
               <input
                 type="email"
                 required
@@ -383,7 +406,7 @@ export const ReportFound: React.FC = () => {
                 type="tel"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 234 567 8900"
+                placeholder="+1 234 567 8900 or 9876543210"
                 className="saas-input w-full py-2 px-3"
               />
             </div>

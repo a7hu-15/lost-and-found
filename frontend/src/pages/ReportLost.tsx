@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, CheckCircle2, Lock, ExternalLink } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Upload, Sparkles, ExternalLink, Lock } from 'lucide-react';
 import api from '../services/api';
 import { ImageUploader } from '../components/ImageUploader';
 
 export const ReportLost: React.FC = () => {
   const [step, setStep] = useState(1);
-
-  // Form Data
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Electronics');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Form State
+  const [category, setCategory] = useState('');
   const [brand, setBrand] = useState('');
   const [color, setColor] = useState('');
+  const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
   const [lostDate, setLostDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
@@ -19,14 +21,10 @@ export const ReportLost: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [createdItem, setCreatedItem] = useState<{ report_id: string; access_token: string } | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const categories = [
     'Electronics',
-    'Laptop',
     'Wallet',
-    'Bottle',
     'Bag',
     'Phone',
     'Keys',
@@ -39,10 +37,37 @@ export const ReportLost: React.FC = () => {
     if (detected.color) setColor(detected.color);
   };
 
+  const handleNextFromStep2 = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (lostDate > todayStr) {
+      setError('Date Lost cannot be in the future.');
+      return;
+    }
+    setError('');
+    setStep(3);
+  };
+
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (lostDate > todayStr) {
+      setError('Date Lost cannot be in the future.');
+      return;
+    }
+
+    if (contactPhone && contactPhone.trim()) {
+      const phoneStr = contactPhone.trim();
+      const digits = phoneStr.replace(/\D/g, '');
+      const phoneRegex = /^\+?[0-9\s\-\(\)]{7,15}$/;
+      if (!phoneRegex.test(phoneStr) || digits.length < 7 || digits.length > 15) {
+        setError('Please enter a valid phone number (7–15 digits) or leave the field blank.');
+        return;
+      }
+    }
+
+    setLoading(true);
 
     try {
       const formData = new FormData();
@@ -109,7 +134,7 @@ export const ReportLost: React.FC = () => {
           </div>
 
           <p className="text-[11px] text-zinc-500">
-            Forgot your Report ID later? Simply search your email inbox for <strong>"Lost & Found"</strong> or <strong>"{createdItem.report_id.slice(0, 9)}"</strong> to recover it instantly.
+            Forgot your Report ID later? Simply search your email inbox for <strong>"Lost &amp; Found"</strong> or <strong>"{createdItem.report_id.slice(0, 9)}"</strong> to recover it instantly.
           </p>
 
           <div className="flex flex-col gap-2 pt-2">
@@ -148,58 +173,41 @@ export const ReportLost: React.FC = () => {
         </span>
       </div>
 
+      {error && (
+        <div className="bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs p-3.5 rounded flex items-center gap-2 font-mono">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Main Card Container */}
       <div className="saas-card p-6 sm:p-8 space-y-6">
         
-        {error && (
-          <div className="bg-rose-950/40 border border-rose-900/60 text-rose-300 text-xs p-3 rounded font-mono">
-            {error}
-          </div>
-        )}
-
-        {/* STEP 1: PHOTO OR SKIP + ITEM NAME + CATEGORY */}
+        {/* STEP 1: ITEM TYPE & IMAGE */}
         {step === 1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Step 1: Upload Photo OR Enter Item Name</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Upload a photo if you have one, or skip directly to item name</p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Step 1: What did you lose?</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Select category and upload a photo if available</p>
             </div>
 
-            {/* Photo Upload Area */}
-            <div>
-              <ImageUploader
-                onImageChange={setUploadedFile}
-                onAIDetect={handleAIDetected}
-                isRequired={false}
-                selectedCategory={category}
-              />
-            </div>
+            <ImageUploader
+              onImageChange={setUploadedFile}
+              onAIDetect={handleAIDetected}
+            />
 
-            {/* Item Title / Name */}
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Item Name *</label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Black Leather Wallet or Dell XPS 15 Laptop"
-                className="saas-input w-full py-2 px-3"
-              />
-            </div>
-
-            {/* Category Choice */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-2">Category</label>
-              <div className="grid grid-cols-4 gap-2">
+              <label className="block text-xs font-medium text-zinc-300 mb-2">Category *</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setCategory(cat)}
-                    className={`py-2 px-3 rounded border text-xs font-medium text-center transition-all ${
+                    className={`p-2.5 rounded border text-left transition-all ${
                       category === cat
-                        ? 'bg-white text-black border-white font-bold'
-                        : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                        ? 'bg-amber-950/40 border-amber-500 text-amber-300 font-bold'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                     }`}
                   >
                     {cat}
@@ -208,14 +216,38 @@ export const ReportLost: React.FC = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">Brand (Optional)</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="e.g. Apple, Dell, Titan"
+                  className="saas-input w-full py-2 px-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">Color (Optional)</label>
+                <input
+                  type="text"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  placeholder="e.g. Black, Navy Blue"
+                  className="saas-input w-full py-2 px-3"
+                />
+              </div>
+            </div>
+
             <div className="flex justify-end pt-2">
               <button
                 type="button"
-                disabled={!title.trim()}
+                disabled={!category}
                 onClick={() => setStep(2)}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
-                Next: Location & Date <ArrowRight className="w-3.5 h-3.5" />
+                Next: Where &amp; When Lost <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -226,17 +258,17 @@ export const ReportLost: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">Step 2: Where and when was it lost?</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Specify location and date details</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Location details help our matching algorithm</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Last Seen Location *</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Specific Location *</label>
               <input
                 type="text"
                 required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Main Library 2nd Floor Reading Room"
+                placeholder="e.g. Central Library 2nd Floor, Food Court Table 12"
                 className="saas-input w-full py-2 px-3"
               />
             </div>
@@ -246,6 +278,7 @@ export const ReportLost: React.FC = () => {
               <input
                 type="date"
                 required
+                max={new Date().toISOString().split('T')[0]}
                 value={lostDate}
                 onChange={(e) => setLostDate(e.target.value)}
                 className="saas-input w-full py-2 px-3"
@@ -263,7 +296,7 @@ export const ReportLost: React.FC = () => {
               <button
                 type="button"
                 disabled={!location.trim()}
-                onClick={() => setStep(3)}
+                onClick={handleNextFromStep2}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
                 Next: Distinctive Details <ArrowRight className="w-3.5 h-3.5" />
@@ -338,7 +371,7 @@ export const ReportLost: React.FC = () => {
                 type="tel"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 234 567 8900"
+                placeholder="+1 234 567 8900 or 9876543210"
                 className="saas-input w-full py-2 px-3"
               />
             </div>

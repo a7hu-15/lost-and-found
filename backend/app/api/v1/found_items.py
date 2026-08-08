@@ -14,6 +14,9 @@ from app.matching.engine import calculate_item_similarity
 from app.notifications.service import send_report_confirmation_email, send_match_alert_email
 from app.services.image_service import process_and_store_image
 
+import re
+from datetime import date as date_cls
+
 router = APIRouter()
 
 @router.post("/create", response_model=FoundItemOut, status_code=status.HTTP_201_CREATED)
@@ -32,6 +35,23 @@ async def create_found_item(
     file: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db)
 ):
+    # Server-side validation: Future date check
+    if found_date > date_cls.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Date found cannot be in the future."
+        )
+
+    # Server-side validation: Phone number format check
+    if contact_phone and contact_phone.strip():
+        phone_str = contact_phone.strip()
+        digits = re.sub(r'\D', '', phone_str)
+        if not re.match(r'^\+?[0-9\s\-\(\)]{7,15}$', phone_str) or not (7 <= len(digits) <= 15):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid phone number format. Please provide a valid phone number (7–15 digits) or leave it empty."
+            )
+
     report_id = generate_report_id()
     access_token = generate_access_token()
 
