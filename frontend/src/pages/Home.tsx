@@ -10,7 +10,7 @@ export const Home: React.FC = () => {
       {/* Hero Section */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 shadow-md mb-1">
-          <LogoIcon sizeClass="w-12 h-12" idPrefix="hero-lf" />
+          <LogoIcon sizeClass="w-12 h-12" />
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
