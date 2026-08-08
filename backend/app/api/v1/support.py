@@ -1,27 +1,22 @@
 import logging
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.database.session import get_db
+from app.models.support_ticket import SupportTicket, TicketStatus
 from app.models.audit import AuditLog
+from app.schemas.support import SupportTicketCreate
 from app.notifications.service import send_email
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-class SupportMessageCreate(BaseModel):
-    name: str
-    email: EmailStr
-    subject: str
-    message: str
-
-@router.post("", status_code=status.HTTP_200_OK)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def submit_support_message(
-    payload: SupportMessageCreate,
+    payload: SupportTicketCreate,
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
@@ -29,8 +24,21 @@ async def submit_support_message(
         now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
         client_ip = request.client.host if request.client else "Unknown"
 
-        text_content = f"""New Support Ticket Received
+        # 1. Store ticket in database
+        ticket = SupportTicket(
+            name=payload.name,
+            email=payload.email,
+            subject=payload.subject,
+            message=payload.message,
+            status=TicketStatus.OPEN,
+            ip_address=client_ip
+        )
+        db.add(ticket)
+        await db.flush()
 
+        text_content = f"""New Support Ticket Received [{ticket.ticket_id}]
+
+Ticket ID: {ticket.ticket_id}
 Name: {payload.name}
 Email: {payload.email}
 Subject: {payload.subject}
@@ -43,8 +51,9 @@ Message:
 
         html_content = f"""
         <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e7; border-radius: 8px;">
-          <h2 style="color: #09090b; margin-top: 0;">[Support Ticket] {payload.subject}</h2>
+          <h2 style="color: #09090b; margin-top: 0;">[{ticket.ticket_id}] {payload.subject}</h2>
           <div style="background: #f4f4f5; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 16px;">
+            <div><strong>Ticket ID:</strong> {ticket.ticket_id}</div>
             <div><strong>From:</strong> {payload.name} (&lt;{payload.email}&gt;)</div>
             <div><strong>Time:</strong> {now_str}</div>
             <div><strong>IP:</strong> {client_ip}</div>
@@ -55,24 +64,27 @@ Message:
         </div>
         """
 
-        # Dispatch email to SUPPORT_EMAIL
+        # 2. Dispatch email notification to SUPPORT_EMAIL
         send_email(
             to_email=settings.SUPPORT_EMAIL,
-            subject=f"[Lost & Found Support] {payload.subject}",
+            subject=f"[Support Ticket {ticket.ticket_id}] {payload.subject}",
             body_text=text_content,
             body_html=html_content
         )
 
-        # Record audit log
+        # 3. Record audit log
         audit = AuditLog(
             action="SUPPORT_TICKET_SUBMITTED",
             resource="support",
-            details={"email": payload.email, "subject": payload.subject, "ip": client_ip}
+            details={"ticket_id": ticket.ticket_id, "email": payload.email, "subject": payload.subject, "ip": client_ip}
         )
         db.add(audit)
         await db.commit()
 
-        return {"message": "Support ticket submitted successfully."}
+        return {
+            "message": "Support ticket submitted successfully.",
+            "ticket_id": ticket.ticket_id
+        }
 
     except Exception as e:
         logger.error(f"Support message delivery failed: {str(e)}")

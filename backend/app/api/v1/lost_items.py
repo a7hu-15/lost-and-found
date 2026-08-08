@@ -116,7 +116,7 @@ async def list_lost_items(
     status: Optional[ItemStatus] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(LostItem).order_by(LostItem.created_at.desc())
+    query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN).order_by(LostItem.created_at.desc())
     if category:
         query = query.where(LostItem.category.ilike(f"%{category}%"))
     if location:

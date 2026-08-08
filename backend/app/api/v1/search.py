@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
 from app.database.session import get_db
-from app.models.lost_item import LostItem
+from app.models.lost_item import LostItem, ItemStatus
 from app.models.found_item import FoundItem
 from app.schemas.lost_item import LostItemOut
 from app.schemas.found_item import FoundItemOut
@@ -19,8 +19,8 @@ async def search_items(
     color: Optional[str] = Query(None, description="Filter by color"),
     db: AsyncSession = Depends(get_db)
 ):
-    # Query lost items
-    lost_query = select(LostItem)
+    # Query lost items (Excluding HIDDEN items)
+    lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN)
     if q:
         lost_query = lost_query.where(
             or_(
@@ -39,8 +39,8 @@ async def search_items(
     lost_result = await db.execute(lost_query.order_by(LostItem.created_at.desc()))
     lost_items = lost_result.scalars().all()
 
-    # Query found items
-    found_query = select(FoundItem)
+    # Query found items (Excluding HIDDEN items)
+    found_query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN)
     if q:
         found_query = found_query.where(
             or_(

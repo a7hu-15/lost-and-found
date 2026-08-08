@@ -1,6 +1,8 @@
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
+from app.models.user import UserRole
+from app.models.lost_item import ItemStatus
 
 class AuditLogOut(BaseModel):
     id: str
@@ -23,3 +25,23 @@ class DashboardStats(BaseModel):
     resolved_claims: int
     resolution_rate: float
     category_distribution: Dict[str, int]
+    open_support_tickets: int = 0
+
+class UserRoleUpdate(BaseModel):
+    role: UserRole
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+class ItemStatusUpdate(BaseModel):
+    status: ItemStatus
+    moderation_reason: Optional[str] = None
+    admin_notes: Optional[str] = None
+
+class TrendDataPoint(BaseModel):
+    date: str
+    lost_count: int
+    found_count: int
+
+class AdminAnalyticsTrend(BaseModel):
+    trends: List[TrendDataPoint]

@@ -138,7 +138,7 @@ async def list_found_items(
     status: Optional[ItemStatus] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(FoundItem).order_by(FoundItem.created_at.desc())
+    query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN).order_by(FoundItem.created_at.desc())
     if category:
         query = query.where(FoundItem.category.ilike(f"%{category}%"))
     if location:

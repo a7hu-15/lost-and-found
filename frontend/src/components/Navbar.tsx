@@ -112,28 +112,6 @@ export const Navbar: React.FC = () => {
           </div>
         </nav>
 
-        {/* Authenticated Admin Badge Only */}
-        {user && (
-          <div className={`flex items-center gap-2 pl-2 border-l ${isLight ? 'border-zinc-300' : 'border-zinc-800'}`}>
-            <Link
-              to="/admin"
-              className="saas-button-secondary text-xs py-1 px-2.5 flex items-center gap-1.5"
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 text-zinc-500" />
-              Admin
-            </Link>
-            <button
-              onClick={handleLogout}
-              className={`p-1.5 rounded-md transition-colors ${
-                isLight ? 'text-zinc-600 hover:text-rose-600 hover:bg-zinc-200' : 'text-zinc-400 hover:text-rose-400 hover:bg-zinc-800'
-              }`}
-              title="Log Out Admin"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
       </div>
     </header>
   );

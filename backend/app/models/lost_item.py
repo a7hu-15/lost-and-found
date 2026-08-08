@@ -15,6 +15,7 @@ class ItemStatus(str, enum.Enum):
     CLAIMED = "CLAIMED"
     RETURNED = "RETURNED"
     CLOSED = "CLOSED"
+    HIDDEN = "HIDDEN"
 
 def generate_report_id() -> str:
     chars = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))

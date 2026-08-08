@@ -4,6 +4,7 @@ from app.models.found_item import FoundItem
 from app.models.match import MatchScore, MatchStatus
 from app.models.claim import Claim, ClaimStatus
 from app.models.audit import AuditLog
+from app.models.support_ticket import SupportTicket, TicketStatus
 
 __all__ = [
     "User",
@@ -16,4 +17,6 @@ __all__ = [
     "Claim",
     "ClaimStatus",
     "AuditLog",
+    "SupportTicket",
+    "TicketStatus",
 ]

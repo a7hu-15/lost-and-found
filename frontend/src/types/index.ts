@@ -10,7 +10,7 @@ export interface User {
   created_at: string;
 }
 
-export type ItemStatus = 'REPORTED' | 'MATCHED' | 'CLAIMED' | 'RETURNED' | 'CLOSED';
+export type ItemStatus = 'REPORTED' | 'MATCHED' | 'CLAIMED' | 'RETURNED' | 'CLOSED' | 'HIDDEN';
 
 export interface LostItem {
   id: string;
@@ -26,6 +26,8 @@ export interface LostItem {
   reward?: number;
   image_url?: string;
   thumbnail_url?: string;
+  contact_email: string;
+  contact_phone?: string;
   status: ItemStatus;
   created_at: string;
 }
@@ -44,6 +46,8 @@ export interface FoundItem {
   storage_location: string;
   image_url?: string;
   thumbnail_url?: string;
+  contact_email: string;
+  contact_phone?: string;
   status: ItemStatus;
   created_at: string;
 }
@@ -75,6 +79,22 @@ export interface Claim {
   found_item?: FoundItem;
 }
 
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+
+export interface SupportTicket {
+  id: string;
+  ticket_id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: TicketStatus;
+  admin_notes?: string;
+  ip_address?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuditLog {
   id: string;
   user_id?: string;
@@ -94,4 +114,11 @@ export interface DashboardStats {
   resolved_claims: number;
   resolution_rate: number;
   category_distribution: Record<string, number>;
+  open_support_tickets: number;
+}
+
+export interface TrendDataPoint {
+  date: string;
+  lost_count: number;
+  found_count: number;
 }
