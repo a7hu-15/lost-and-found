@@ -74,13 +74,13 @@ export const Search: React.FC = () => {
           <div className="flex gap-1 bg-zinc-900 p-1 rounded border border-zinc-800 text-xs font-mono">
             <button
               onClick={() => setSearchMode('text')}
-              className={`px-3 py-1 rounded font-medium transition-colors ${searchMode === 'text' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
+              className={`px-3 py-1 rounded font-medium transition-colors ${searchMode === 'text' ? 'search-toggle-active' : 'search-toggle-inactive'}`}
             >
               Text Search
             </button>
             <button
               onClick={() => setSearchMode('image')}
-              className={`px-3 py-1 rounded font-medium flex items-center gap-1 transition-colors ${searchMode === 'image' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
+              className={`px-3 py-1 rounded font-medium flex items-center gap-1 transition-colors ${searchMode === 'image' ? 'search-toggle-active' : 'search-toggle-inactive'}`}
             >
               <Sparkles className="w-3 h-3 text-blue-400" /> Image Search
             </button>

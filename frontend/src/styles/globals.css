@@ -231,6 +231,30 @@ html.light .saas-button-secondary:hover {
   border-color: #F97316;
 }
 
+/* Search Mode Toggle High-Contrast Classes */
+.search-toggle-active {
+  background-color: #27272A !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+html.light .search-toggle-active {
+  background-color: #18181B !important;
+  color: #FFFFFF !important;
+}
+
+.search-toggle-inactive {
+  color: #A1A1AA !important;
+}
+.search-toggle-inactive:hover {
+  color: #FFFFFF !important;
+}
+html.light .search-toggle-inactive {
+  color: #52525B !important;
+}
+html.light .search-toggle-inactive:hover {
+  color: #18181B !important;
+}
+
 /* Custom Utilities for Light Mode overrides */
 html.light .bg-\[\#09090b\] {
   background-color: #F8F8F6 !important;
