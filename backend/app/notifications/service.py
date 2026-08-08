@@ -70,27 +70,44 @@ SRM Campus Security & Lost & Found Team
 """
 
     html_content = f"""
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e4e4e7; rounded: 8px;">
-      <h2 style="color: #09090b; margin-top: 0;">Lost &amp; Found Report Created</h2>
-      <p style="color: #71717a; font-size: 14px;">Your report has been successfully saved to the campus database.</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
+        .subtitle {{ font-size: 13px; color: #71717a; margin-bottom: 24px; }}
+        .badge-box {{ background-color: #09090b; color: #ffffff; padding: 16px 20px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 24px; }}
+        .badge-label {{ font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }}
+        .badge-id {{ font-size: 20px; font-weight: 700; color: #ffffff; margin-top: 2px; }}
+        .badge-detail {{ font-size: 12px; color: #d4d4d8; margin-top: 6px; font-family: sans-serif; }}
+        .btn {{ background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
+        .footer {{ font-size: 12px; color: #a1a1aa; border-top: 1px solid #e4e4e7; pt: 20px; margin-top: 28px; line-height: 1.5; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Lost &amp; Found Report Created</div>
+        <div class="subtitle">Your item report has been logged to the campus database.</div>
 
-      <div style="background-color: #f4f4f5; padding: 16px; border-radius: 6px; margin: 20px 0; font-family: monospace;">
-        <div style="font-size: 11px; color: #71717a; text-transform: uppercase;">Report ID</div>
-        <div style="font-size: 18px; font-weight: bold; color: #09090b; letter-spacing: 1px;">{report_id}</div>
-        <div style="font-size: 13px; color: #3f3f46; margin-top: 6px;">Item: {item_title}</div>
+        <div class="badge-box">
+          <div class="badge-label">Unique Report ID</div>
+          <div class="badge-id">{report_id}</div>
+          <div class="badge-detail">Item: {item_title} &bull; Status: Searching</div>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <a href="{tracking_url}" class="btn">Track My Report &rarr;</a>
+        </div>
+
+        <div class="footer">
+          Please keep this email receipt. If you ever forget your Report ID, simply search your inbox for <strong>Lost &amp; Found</strong> or <strong>{report_id[:9]}</strong> to recover your status link.
+        </div>
       </div>
-
-      <div style="margin: 24px 0;">
-        <a href="{tracking_url}" style="background-color: #18181b; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; display: inline-block;">
-          Track Report Status &rarr;
-        </a>
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid #e4e4e7; margin: 24px 0;" />
-      <p style="color: #a1a1aa; font-size: 12px; line-height: 1.5;">
-        Please save this email. If you forget your Report ID, search your inbox for <strong>Lost &amp; Found</strong> or <strong>{report_id[:8]}</strong> to recover it anytime.
-      </p>
-    </div>
+    </body>
+    </html>
     """
 
     send_email(email, subject, text_content, html_content)
@@ -113,7 +130,37 @@ Review & Track Match Here:
 Campus Security & Lost & Found Team
 """
 
-    send_email(email, subject, text_content)
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
+        .score-box {{ background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 16px; border-radius: 6px; margin: 20px 0; font-family: monospace; }}
+        .btn {{ background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Possible Match Found ({match_score:.0f}%)</div>
+        <div style="font-size: 13px; color: #71717a;">Our rule engine matched your report {report_id} with a turned-in item.</div>
+
+        <div class="score-box">
+          <div style="font-size: 11px; text-transform: uppercase;">Similarity Confidence Score</div>
+          <div style="font-size: 22px; font-weight: bold;">{match_score:.0f}% Match</div>
+          <div style="font-size: 13px; margin-top: 4px;">Matched Item: {matched_title}</div>
+        </div>
+
+        <a href="{tracking_url}" class="btn">Review Match Details &rarr;</a>
+      </div>
+    </body>
+    </html>
+    """
+
+    send_email(email, subject, text_content, html_content)
 
 
 def send_claim_approved_email(email: str, report_id: str, storage_location: str):
@@ -131,4 +178,31 @@ IMPORTANT: Please bring your valid Student ID card when collecting your item.
 Campus Security Office
 """
 
-    send_email(email, subject, text_content)
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
+        .success-box {{ background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 16px; border-radius: 6px; margin: 20px 0; font-family: monospace; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Item Ready for Pickup</div>
+        <div style="font-size: 13px; color: #71717a;">Your ownership verification for report {report_id} was approved by Security Staff.</div>
+
+        <div class="success-box">
+          <div style="font-size: 11px; text-transform: uppercase;">Holding Storage Location</div>
+          <div style="font-size: 16px; font-weight: bold; margin-top: 2px;">{storage_location}</div>
+          <div style="font-size: 12px; margin-top: 8px; font-family: sans-serif;">Please bring your valid Student ID card when collecting your item.</div>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    send_email(email, subject, text_content, html_content)

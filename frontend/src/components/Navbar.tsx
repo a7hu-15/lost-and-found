@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, LogOut, LayoutDashboard, Shield, HelpCircle } from 'lucide-react';
+import { Logo } from './Logo';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -20,18 +21,8 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-7 h-7 rounded-md bg-white text-black flex items-center justify-center font-bold text-xs">
-            LF
-          </div>
-          <div>
-            <span className="text-sm font-semibold text-white tracking-tight">
-              Lost & Found
-            </span>
-            <span className="text-[10px] text-zinc-400 block font-normal -mt-0.5">
-              Campus Item Recovery System
-            </span>
-          </div>
+        <Link to="/" className="group">
+          <Logo />
         </Link>
 
         {/* Primary Nav Links */}
