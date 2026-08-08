@@ -113,7 +113,7 @@ export const AdminLogin: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@srm.edu"
+                    placeholder="Enter your authorized email address"
                     className="admin-input w-full py-2 px-3 text-xs"
                   />
                 </div>

@@ -39,15 +39,17 @@ class Settings(BaseSettings):
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
 
     # SMTP Email Configuration
-    SUPPORT_EMAIL: str = os.getenv("SUPPORT_EMAIL", "support.lostandfound@gmail.com")
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USER: str = os.getenv("SMTP_USER", "")
-    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
     SMTP_TLS: bool = True
-    SMTP_FROM: str = os.getenv("SMTP_FROM", "noreply@srm.edu")
+    SMTP_FROM: str = "cloudlostfound.platform@gmail.com"
 
     class Config:
         case_sensitive = True
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 settings = Settings()
