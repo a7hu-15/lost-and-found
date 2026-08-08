@@ -7,6 +7,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
   isOwner: boolean;
   isStaff: boolean;
@@ -22,20 +23,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (token) {
-        try {
-          const res = await api.get('/auth/me');
-          setUser(res.data);
-        } catch (err) {
-          logout();
-        }
+  const fetchUser = async () => {
+    if (token) {
+      try {
+        const res = await api.get('/auth/me');
+        setUser(res.data);
+      } catch (err) {
+        logout();
       }
-      setIsLoading(false);
-    };
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [token]);
+
+  const refreshUser = async () => {
+    await fetchUser();
+  };
 
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem('token', newToken);
@@ -65,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{
-      user, token, login, logout, isLoading,
+      user, token, login, logout, refreshUser, isLoading,
       isOwner, isStaff, hasPermission,
       isAdmin: isOwner, isSecurityStaff: isStaff
     }}>

@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminAccount: React.FC = () => {
-  const { user, isOwner } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   // Change Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -75,6 +75,7 @@ export const AdminAccount: React.FC = () => {
       setMfaSecret(null);
       setMfaQrUri(null);
       setMfaCode('');
+      await refreshUser();
       setTimeout(() => setMfaSuccess(''), 5000);
     } catch (err: any) {
       setMfaError(err.response?.data?.detail || 'Invalid authenticator verification code.');
@@ -218,17 +219,35 @@ export const AdminAccount: React.FC = () => {
 
           {mfaSecret && (
             <div className="space-y-4 pt-2 border-t border-[var(--admin-border)]">
-              <div className="bg-[var(--admin-surface-subtle)] p-3.5 rounded border border-[var(--admin-border)] text-xs font-mono space-y-2">
-                <div className="text-[10px] text-[var(--admin-text-muted)] uppercase font-bold">Authenticator Secret Key</div>
-                <div className="text-amber-500 font-bold select-all text-sm tracking-wider">{mfaSecret}</div>
-                <div className="text-[10px] text-[var(--admin-text-muted)] mt-1">
-                  Enter this secret key in your Google Authenticator or 1Password app to generate 6-digit TOTP verification codes.
+              
+              {/* Scannable QR Code & Secret Key */}
+              <div className="bg-[var(--admin-surface-subtle)] p-4 rounded border border-[var(--admin-border)] text-xs font-mono flex flex-col sm:flex-row items-center gap-4">
+                {mfaQrUri && (
+                  <div className="bg-white p-2 rounded border border-[var(--admin-border)] shrink-0">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(mfaQrUri)}`}
+                      alt="Authenticator QR Code"
+                      className="w-28 h-28"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2 text-center sm:text-left flex-1">
+                  <div className="text-[10px] text-[var(--admin-text-muted)] uppercase font-bold">1. Scan QR Code OR Copy Secret Key</div>
+                  <div className="text-amber-500 font-bold select-all text-xs tracking-wider break-all bg-[var(--admin-surface)] p-2 rounded border border-[var(--admin-border)]">
+                    {mfaSecret}
+                  </div>
+                  <div className="text-[10px] text-[var(--admin-text-muted)] leading-relaxed font-sans">
+                    Open <strong>Google Authenticator</strong> on your phone &rarr; tap <strong>+</strong> &rarr; tap <strong>Scan QR code</strong> (or enter key manually).
+                  </div>
                 </div>
               </div>
 
               <form onSubmit={handleEnableMfa} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">Enter 6-Digit Authenticator Code *</label>
+                  <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
+                    2. Enter 6-Digit Code Shown in Google Authenticator *
+                  </label>
                   <input
                     type="text"
                     required
@@ -236,7 +255,7 @@ export const AdminAccount: React.FC = () => {
                     value={mfaCode}
                     onChange={(e) => setMfaCode(e.target.value)}
                     placeholder="123456"
-                    className="admin-input w-full py-2 px-3 text-xs font-mono text-center tracking-widest text-lg"
+                    className="admin-input w-full py-2.5 px-3 text-xs font-mono text-center tracking-widest text-lg"
                   />
                 </div>
 
