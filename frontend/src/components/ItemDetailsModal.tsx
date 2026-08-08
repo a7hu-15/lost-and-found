@@ -18,14 +18,31 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
   const foundItem = item as FoundItem;
   const dateStr = isLost ? lostItem.lost_date : foundItem.found_date;
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'REPORTED':
+        return { label: 'Searching', class: 'bg-amber-950/40 text-amber-300 border-amber-900/50' };
+      case 'MATCHED':
+        return { label: 'Possible Match', class: 'bg-blue-950/40 text-blue-300 border-blue-900/50' };
+      case 'CLAIMED':
+        return { label: 'Verification in Progress', class: 'bg-purple-950/40 text-purple-300 border-purple-900/50' };
+      case 'RETURNED':
+        return { label: 'Returned', class: 'bg-emerald-950/40 text-emerald-300 border-emerald-900/50' };
+      default:
+        return { label: status, class: 'bg-zinc-900 text-zinc-400 border-zinc-800' };
+    }
+  };
+
+  const badge = getStatusBadge(item.status);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="saas-card max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 relative animate-in fade-in zoom-in duration-200">
+      <div className="saas-card max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 relative animate-in fade-in duration-200">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-white bg-zinc-900 rounded-full border border-zinc-800"
+          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-white bg-zinc-900 rounded-full border border-zinc-800 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -40,6 +57,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
             {isLost ? 'Lost Item' : 'Found Item'}
           </span>
 
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${badge.class}`}>
+            {badge.label}
+          </span>
+
           <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
             {item.report_id}
           </span>
@@ -48,7 +69,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
         {/* Title */}
         <h2 className="text-xl font-bold text-white tracking-tight">{item.title}</h2>
 
-        {/* Main High-Res Image */}
+        {/* Main Large Image */}
         {item.image_url ? (
           <div className="w-full h-64 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
             <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
@@ -56,83 +77,71 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
         ) : (
           <div className="w-full h-32 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600 font-mono text-xs gap-1.5">
             <ImageIcon className="w-5 h-5 text-zinc-700" />
-            No Photo Available
+            No Image Available
           </div>
         )}
 
         {/* Key Attributes Grid */}
         <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-          <div className="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-0.5">
+          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
             <span className="text-zinc-500 text-[10px] uppercase block">Category</span>
             <span className="text-zinc-200 font-semibold">{item.category}</span>
           </div>
 
-          <div className="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-0.5">
+          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
             <span className="text-zinc-500 text-[10px] uppercase block">Location</span>
             <span className="text-zinc-200 font-semibold truncate block">{item.location}</span>
           </div>
 
-          <div className="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-0.5">
+          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
             <span className="text-zinc-500 text-[10px] uppercase block">Date {isLost ? 'Lost' : 'Found'}</span>
             <span className="text-zinc-200 font-semibold">{dateStr}</span>
           </div>
 
-          <div className="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-0.5">
+          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 space-y-0.5">
             <span className="text-zinc-500 text-[10px] uppercase block">Status</span>
-            <span className="text-blue-400 font-semibold">{item.status}</span>
+            <span className="text-zinc-200 font-semibold">{badge.label}</span>
           </div>
         </div>
 
         {!isLost && (
-          <div className="bg-zinc-900 p-3 rounded border border-zinc-800 text-xs font-mono flex items-center gap-2">
+          <div className="bg-zinc-900/80 p-3 rounded border border-zinc-800 text-xs font-mono flex items-center gap-2">
             <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
             <div>
-              <span className="text-zinc-500 text-[10px] uppercase block">Current Holding Location</span>
+              <span className="text-zinc-500 text-[10px] uppercase block">Campus Storage Location</span>
               <span className="text-zinc-200 font-medium">{foundItem.storage_location}</span>
             </div>
           </div>
         )}
 
         {/* Full Description */}
-        <div className="bg-zinc-900 p-3.5 rounded border border-zinc-800 space-y-1">
-          <span className="text-zinc-500 text-[10px] uppercase font-mono block">Distinctive Details & Description</span>
+        <div className="bg-zinc-900/80 p-3.5 rounded border border-zinc-800 space-y-1">
+          <span className="text-zinc-500 text-[10px] uppercase font-mono block">Description</span>
           <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{item.description}</p>
         </div>
 
         {/* Action Buttons */}
         <div className="pt-2 flex gap-3">
-          {isLost ? (
+          {!isLost && item.status !== 'CLAIMED' && item.status !== 'RETURNED' && (
             <button
               onClick={() => {
                 onClose();
-                navigate('/report-found', { state: { linkedLostItem: lostItem } });
+                navigate('/claims', { state: { foundItem: item } });
               }}
-              className="saas-button-primary text-xs w-full py-2.5 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500"
+              className="saas-button-primary text-xs w-full py-2.5 flex items-center justify-center gap-1.5"
             >
-              I Found This Item <ArrowUpRight className="w-4 h-4" />
+              This is Mine <ArrowUpRight className="w-4 h-4" />
             </button>
-          ) : (
-            item.status !== 'CLAIMED' && item.status !== 'RETURNED' && (
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate('/claims', { state: { foundItem: item } });
-                }}
-                className="saas-button-primary text-xs w-full py-2.5 flex items-center justify-center gap-1.5"
-              >
-                This is Mine (Submit Claim) <ArrowUpRight className="w-4 h-4" />
-              </button>
-            )
           )}
 
           <button
             onClick={() => {
               onClose();
-              navigate(`/track`);
+              navigate(`/track?report_id=${item.report_id}`);
             }}
             className="saas-button-secondary text-xs w-full py-2.5 flex items-center justify-center gap-1.5"
           >
-            Track Report Status
+            Track Report
           </button>
         </div>
 

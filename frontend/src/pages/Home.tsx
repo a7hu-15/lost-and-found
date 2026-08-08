@@ -1,34 +1,33 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Shield, Search, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Plus, Shield, Search, FileText, CheckCircle2, Clock, Mail, Lock } from 'lucide-react';
 
 export const Home: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto py-12 space-y-12">
       
-      {/* Hero Section with Value-Focused Headline */}
+      {/* Hero Section */}
       <div className="text-center space-y-3">
-        <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-blue-400 bg-blue-950/50 px-3 py-1 rounded-full border border-blue-900/60 inline-block">
-          Official Campus Item Recovery
-        </span>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-          Lost something on campus?<br />We'll help you get it back.
+          Lost & Found
         </h1>
+        <p className="text-sm font-medium text-zinc-300">
+          Helping campus items find their way home.
+        </p>
         <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto leading-relaxed">
-          One trusted, secure platform for reporting lost items, logging found items, and coordinating verified handovers at the Campus Security Office.
+          Report an item in under a minute. If a matching report is found, we'll notify you automatically.
         </p>
       </div>
 
-      {/* Four Large Task Action Cards */}
+      {/* Four Equal Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         
-        {/* 1. Report Lost Item */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-rose-500 hover:border-zinc-700 transition-colors">
+        {/* 1. Lost Something */}
+        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-rose-500 hover:border-zinc-700 transition-all">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400">Lost Something?</span>
-            <h2 className="text-lg font-bold text-white tracking-tight mt-1">Report Lost Item</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">Lost Something?</h2>
             <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Report in under 60 seconds. If someone turns it in, our matching engine will notify you automatically.
+              We'll keep an eye out.
             </p>
           </div>
           <Link to="/report-lost" className="saas-button-primary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
@@ -37,13 +36,12 @@ export const Home: React.FC = () => {
           </Link>
         </div>
 
-        {/* 2. Report Found Item */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-emerald-500 hover:border-zinc-700 transition-colors">
+        {/* 2. Found Something */}
+        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-emerald-500 hover:border-zinc-700 transition-all">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400">Found An Item?</span>
-            <h2 className="text-lg font-bold text-white tracking-tight mt-1">Report Found Item</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">Found Something?</h2>
             <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Help someone recover their item by logging it to the Campus Security Office holding desk.
+              Help return an item safely through the campus security office.
             </p>
           </div>
           <Link to="/report-found" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
@@ -52,71 +50,85 @@ export const Home: React.FC = () => {
           </Link>
         </div>
 
-        {/* 3. Track My Report */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-blue-500 hover:border-zinc-700 transition-colors">
+        {/* 3. Looking for Something */}
+        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-purple-500 hover:border-zinc-700 transition-all">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400">Already Submitted?</span>
-            <h2 className="text-lg font-bold text-white tracking-tight mt-1">Track My Report</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">Looking for Something?</h2>
             <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Check match confidence scores and claim status anytime using your private Report ID.
-            </p>
-          </div>
-          <Link to="/track" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
-            <Shield className="w-4 h-4 text-blue-400" />
-            Track My Report
-          </Link>
-        </div>
-
-        {/* 4. Search Directory */}
-        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-purple-500 hover:border-zinc-700 transition-colors">
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400">Looking For Something?</span>
-            <h2 className="text-lg font-bold text-white tracking-tight mt-1">Search Directory</h2>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Search all reported lost and found items across campus by keyword, category, or photo.
+              Search reported lost and found items across campus.
             </p>
           </div>
           <Link to="/search" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
             <Search className="w-4 h-4 text-purple-400" />
-            Search Directory
+            Search Items
+          </Link>
+        </div>
+
+        {/* 4. Already Submitted a Report */}
+        <div className="saas-card p-6 flex flex-col justify-between space-y-4 border-l-4 border-l-blue-500 hover:border-zinc-700 transition-all">
+          <div>
+            <h2 className="text-base font-bold text-white tracking-tight">Already Submitted a Report?</h2>
+            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+              Check your latest report status anytime.
+            </p>
+          </div>
+          <Link to="/track" className="saas-button-secondary text-xs py-2.5 px-4 flex items-center justify-center gap-2">
+            <Shield className="w-4 h-4 text-blue-400" />
+            Track Report
           </Link>
         </div>
 
       </div>
 
-      {/* Visible "How It Works" Section */}
+      {/* How It Works Section */}
       <div className="saas-card p-8 space-y-6">
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-bold text-white tracking-tight">How It Works</h2>
-          <p className="text-xs text-zinc-400">4 simple steps from lost item to verified return</p>
+          <h2 className="text-lg font-bold text-white tracking-tight">How It Works</h2>
+          <p className="text-xs text-zinc-400">Simple 4-step recovery process</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2">
           
           <div className="bg-zinc-900/60 p-4 rounded border border-zinc-800 space-y-2 text-center">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 text-white font-mono font-bold text-xs flex items-center justify-center mx-auto">1</div>
-            <h3 className="text-xs font-bold text-white">📄 Report</h3>
-            <p className="text-[11px] text-zinc-400 leading-normal">Log lost or found item details in under 60 seconds.</p>
+            <FileText className="w-5 h-5 text-zinc-400 mx-auto" />
+            <h3 className="text-xs font-bold text-white">Report</h3>
+            <p className="text-[11px] text-zinc-400 leading-normal">Submit item details in under 60 seconds.</p>
           </div>
 
           <div className="bg-zinc-900/60 p-4 rounded border border-zinc-800 space-y-2 text-center">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 text-white font-mono font-bold text-xs flex items-center justify-center mx-auto">2</div>
-            <h3 className="text-xs font-bold text-white">⚙️ Match</h3>
-            <p className="text-[11px] text-zinc-400 leading-normal">Rule engine compares vector attributes automatically.</p>
+            <Search className="w-5 h-5 text-zinc-400 mx-auto" />
+            <h3 className="text-xs font-bold text-white">Match</h3>
+            <p className="text-[11px] text-zinc-400 leading-normal">Rule engine compares vector attributes.</p>
           </div>
 
           <div className="bg-zinc-900/60 p-4 rounded border border-zinc-800 space-y-2 text-center">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 text-white font-mono font-bold text-xs flex items-center justify-center mx-auto">3</div>
-            <h3 className="text-xs font-bold text-white">📧 Verify</h3>
-            <p className="text-[11px] text-zinc-400 leading-normal">Receive email alerts & submit ownership proof online.</p>
+            <Mail className="w-5 h-5 text-zinc-400 mx-auto" />
+            <h3 className="text-xs font-bold text-white">Verify</h3>
+            <p className="text-[11px] text-zinc-400 leading-normal">Receive updates & submit ownership proof.</p>
           </div>
 
           <div className="bg-zinc-900/60 p-4 rounded border border-zinc-800 space-y-2 text-center">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 text-white font-mono font-bold text-xs flex items-center justify-center mx-auto">4</div>
-            <h3 className="text-xs font-bold text-white">🏢 Collect</h3>
-            <p className="text-[11px] text-zinc-400 leading-normal">Verify Student ID and collect at Security Office Gate 1.</p>
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto" />
+            <h3 className="text-xs font-bold text-white">Collect</h3>
+            <p className="text-[11px] text-zinc-400 leading-normal">Verify Student ID and collect at Security Office.</p>
           </div>
 
+        </div>
+      </div>
+
+      {/* Trust Section */}
+      <div className="flex flex-wrap justify-center gap-6 font-mono text-xs text-zinc-400">
+        <div className="flex items-center gap-1.5 bg-zinc-900/50 px-3 py-1.5 rounded border border-zinc-800">
+          <Lock className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Secure Reports</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-zinc-900/50 px-3 py-1.5 rounded border border-zinc-800">
+          <Mail className="w-3.5 h-3.5 text-blue-400" />
+          <span>Email Updates</span>
+        </div>
+        <div className="flex items-center gap-1.5 bg-zinc-900/50 px-3 py-1.5 rounded border border-zinc-800">
+          <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <span>Under 60 Seconds</span>
         </div>
       </div>
 

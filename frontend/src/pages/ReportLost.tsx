@@ -23,14 +23,14 @@ export const ReportLost: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const categories = [
-    { name: 'Laptop', icon: '💻' },
-    { name: 'Wallet', icon: '👛' },
-    { name: 'Bottle', icon: '🍾' },
-    { name: 'Bag', icon: '🎒' },
-    { name: 'Phone', icon: '📱' },
-    { name: 'Keys', icon: '🔑' },
-    { name: 'ID Card', icon: '🎴' },
-    { name: 'Other', icon: '📦' }
+    'Electronics',
+    'Laptop',
+    'Wallet',
+    'Bottle',
+    'Bag',
+    'Phone',
+    'Keys',
+    'ID Card'
   ];
 
   const handleAIDetected = (detected: { category: string; brand: string; color: string }) => {
@@ -193,17 +193,16 @@ export const ReportLost: React.FC = () => {
               <div className="grid grid-cols-4 gap-2">
                 {categories.map((cat) => (
                   <button
-                    key={cat.name}
+                    key={cat}
                     type="button"
-                    onClick={() => setCategory(cat.name)}
-                    className={`p-2.5 rounded border text-xs font-medium text-center transition-all ${
-                      category === cat.name
+                    onClick={() => setCategory(cat)}
+                    className={`py-2 px-3 rounded border text-xs font-medium text-center transition-all ${
+                      category === cat
                         ? 'bg-white text-black border-white font-bold'
                         : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
                     }`}
                   >
-                    <div className="text-base mb-0.5">{cat.icon}</div>
-                    {cat.name}
+                    {cat}
                   </button>
                 ))}
               </div>

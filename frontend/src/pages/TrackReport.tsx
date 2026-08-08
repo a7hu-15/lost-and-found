@@ -63,10 +63,9 @@ export const TrackReport: React.FC = () => {
       {/* Header Form */}
       <div className="saas-card p-6 space-y-4">
         <div>
-          <span className="text-[10px] font-mono text-blue-400 uppercase">Private Report Status Portal</span>
-          <h1 className="text-xl font-bold text-white tracking-tight">Track Your Report</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Check Report Status</h1>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Enter your Report ID or click your private email receipt link to check real-time status.
+            Enter your Report ID and access token to view the latest updates.
           </p>
         </div>
 
@@ -85,7 +84,7 @@ export const TrackReport: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Private Tracking Token (Optional)</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Access Token (Optional)</label>
               <input
                 type="text"
                 value={tokenInput}
@@ -103,7 +102,7 @@ export const TrackReport: React.FC = () => {
               className="saas-button-primary text-xs py-2 px-4 flex items-center justify-center gap-1.5 w-full sm:w-auto"
             >
               <Search className="w-3.5 h-3.5" />
-              {loading ? 'Fetching Report Status...' : 'Track Report Status'}
+              {loading ? 'Fetching Status...' : 'Check Report Status'}
             </button>
 
             <Link
@@ -124,11 +123,10 @@ export const TrackReport: React.FC = () => {
         </div>
       )}
 
-      {/* Report Status Timeline View */}
+      {/* Report Status View */}
       {reportData && (
         <div className="saas-card p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
           
-          {/* Header Status Card */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
             <div>
               <div className="flex items-center gap-2">
@@ -139,7 +137,9 @@ export const TrackReport: React.FC = () => {
                   reportData.status === 'CLAIMED' ? 'bg-purple-950/40 text-purple-300 border-purple-900/60' :
                   'bg-emerald-950/40 text-emerald-300 border-emerald-900/60'
                 }`}>
-                  {reportData.status}
+                  {reportData.status === 'REPORTED' ? 'Searching' :
+                   reportData.status === 'MATCHED' ? 'Possible Match' :
+                   reportData.status === 'CLAIMED' ? 'Verification in Progress' : 'Returned'}
                 </span>
               </div>
               <h2 className="text-lg font-bold text-white tracking-tight mt-1">{reportData.title}</h2>
@@ -151,28 +151,21 @@ export const TrackReport: React.FC = () => {
             </div>
           </div>
 
-          {/* Status Timeline Bar */}
+          {/* Timeline */}
           <div className="space-y-2">
-            <span className="text-xs font-mono text-zinc-400 uppercase block">Lifecycle Progress</span>
+            <span className="text-xs font-mono text-zinc-400 uppercase block">Status Lifecycle</span>
             
             <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-mono">
-              
-              <div className={`p-3 rounded border space-y-1 ${
-                reportData.status === 'REPORTED' || reportData.status === 'MATCHED' || reportData.status === 'CLAIMED' || reportData.status === 'RETURNED'
-                  ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-500'
-              }`}>
-                <div className="font-bold">1. Reported</div>
-                <div className="text-[9px]">Logged in DB</div>
+              <div className="p-3 rounded border bg-emerald-950/40 border-emerald-800 text-emerald-300 space-y-1">
+                <div className="font-bold">1. Report</div>
               </div>
 
               <div className={`p-3 rounded border space-y-1 ${
                 reportData.status === 'MATCHED' || reportData.status === 'CLAIMED' || reportData.status === 'RETURNED'
                   ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
-                  : reportData.status === 'REPORTED' ? 'bg-amber-950/40 border-amber-800 text-amber-300 animate-pulse' : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                  : 'bg-amber-950/40 border-amber-800 text-amber-300'
               }`}>
-                <div className="font-bold">2. Matching</div>
-                <div className="text-[9px]">Rule Engine</div>
+                <div className="font-bold">2. Match</div>
               </div>
 
               <div className={`p-3 rounded border space-y-1 ${
@@ -180,8 +173,7 @@ export const TrackReport: React.FC = () => {
                   ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-500'
               }`}>
-                <div className="font-bold">3. Claim Verification</div>
-                <div className="text-[9px]">Proof Submitted</div>
+                <div className="font-bold">3. Verify</div>
               </div>
 
               <div className={`p-3 rounded border space-y-1 ${
@@ -189,22 +181,18 @@ export const TrackReport: React.FC = () => {
                   ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-500'
               }`}>
-                <div className="font-bold">4. Handover</div>
-                <div className="text-[9px]">Security Gate 1</div>
+                <div className="font-bold">4. Collect</div>
               </div>
-
             </div>
           </div>
 
-          {/* Matched Items Section if any */}
-          {reportData.matches && reportData.matches.length > 0 && (
+          {/* Matched Items */}
+          {reportData.matches && reportData.matches.length > 0 ? (
             <div className="space-y-3 pt-4 border-t border-zinc-800">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  Potential Matches Found ({reportData.matches.length})
-                </h3>
-              </div>
+              <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                Potential Matches Found ({reportData.matches.length})
+              </h3>
 
               <div className="space-y-3">
                 {reportData.matches.map((match: any) => (
@@ -213,9 +201,6 @@ export const TrackReport: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-emerald-400 font-mono">
                           {match.similarity_score.toFixed(0)}% Similarity Match
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-500">
-                          {match.found_item?.report_id}
                         </span>
                       </div>
                       <h4 className="text-sm font-semibold text-white mt-0.5">{match.found_item?.title}</h4>
@@ -227,18 +212,22 @@ export const TrackReport: React.FC = () => {
                         onClick={() => setSelectedMatchModal(match.found_item)}
                         className="saas-button-secondary text-xs py-1.5 px-3"
                       >
-                        View Photo & Details
+                        View Details
                       </button>
                       <button
                         onClick={() => navigate('/claims', { state: { foundItem: match.found_item } })}
                         className="saas-button-primary text-xs py-1.5 px-3 flex items-center gap-1"
                       >
-                        Claim Item <ArrowUpRight className="w-3.5 h-3.5" />
+                        This is Mine <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="saas-card p-6 text-center text-xs text-zinc-500 font-mono">
+              No updates yet. We'll notify you if your report status changes.
             </div>
           )}
 

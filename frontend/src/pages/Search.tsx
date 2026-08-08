@@ -167,7 +167,7 @@ export const Search: React.FC = () => {
           </h2>
           {lostItems.length === 0 ? (
             <div className="saas-card p-6 text-center text-xs text-zinc-500 font-mono">
-              No matching lost reports.
+              No matching reports found. Try another keyword or category.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -186,7 +186,7 @@ export const Search: React.FC = () => {
           </h2>
           {foundItems.length === 0 ? (
             <div className="saas-card p-6 text-center text-xs text-zinc-500 font-mono">
-              No matching found items.
+              No matching reports found. Try another keyword or category.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

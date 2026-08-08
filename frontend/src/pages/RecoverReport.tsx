@@ -19,7 +19,6 @@ export const RecoverReport: React.FC = () => {
       setSubmitted(true);
     } catch (err) {
       console.error('Recovery request failed', err);
-      // Still set submitted for email privacy
       setSubmitted(true);
     } finally {
       setLoading(false);
@@ -37,20 +36,15 @@ export const RecoverReport: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Recovery Email Sent</h2>
             <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-              If an active report exists for <span className="text-zinc-200 font-semibold">{email}</span>, we have sent a recovery email containing all your active Report IDs and tracking links.
+              If an active report exists for <span className="text-zinc-200 font-semibold">{email}</span>, we have sent your active Report IDs and secure tracking links.
             </p>
-          </div>
-
-          <div className="bg-zinc-900 p-4 rounded border border-zinc-800 text-xs font-mono text-zinc-400 space-y-1 text-left">
-            <div>💡 Check your Gmail inbox or spam folder.</div>
-            <div>💡 Search for <strong>"Lost & Found"</strong> or <strong>"Report Links"</strong>.</div>
           </div>
 
           <button
             onClick={() => navigate('/track')}
             className="saas-button-primary text-xs w-full py-2.5"
           >
-            Return to Track Report
+            Return to Check Report Status
           </button>
         </div>
       </div>
@@ -62,10 +56,9 @@ export const RecoverReport: React.FC = () => {
       
       <div className="saas-card p-6 sm:p-8 space-y-6">
         <div>
-          <span className="text-[10px] font-mono text-blue-400 uppercase">Self-Service Recovery</span>
-          <h1 className="text-xl font-bold text-white tracking-tight mt-0.5">Forgot Your Report ID?</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Recover Your Report</h1>
           <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-            Enter the email address you used when submitting your report. We'll send a recovery link for all active reports.
+            Enter the email address used when submitting your report. We'll send your active Report IDs and secure tracking links.
           </p>
         </div>
 
