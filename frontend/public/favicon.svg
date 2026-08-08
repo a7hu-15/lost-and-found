@@ -1,6 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <rect width="32" height="32" rx="8" fill="#18181b"/>
-  <rect width="30" height="30" x="1" y="1" rx="7" fill="none" stroke="#27272a" stroke-width="2"/>
-  <path d="M16 26s-6.5-3.6-6.5-9.6A6.5 6.5 0 0 1 16 9.8a6.5 6.5 0 0 1 6.5 6.6c0 6-6.5 9.6-6.5 9.6z" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="16" cy="16" r="2.5" fill="#60a5fa"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+  <defs>
+    <linearGradient id="fav-lf-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFB347" />
+      <stop offset="50%" stop-color="#FF8A00" />
+      <stop offset="100%" stop-color="#F97316" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="#09090b"/>
+  <rect width="96" height="96" x="2" y="2" rx="20" fill="none" stroke="#27272a" stroke-width="3"/>
+  <path
+    d="M22 18 C22 14, 28 14, 32 18 V64 C32 78, 44 84, 52 84 C64 84, 68 76, 68 64 V56 H90 C95 56, 95 44, 90 44 H68 V38 C68 28, 76 26, 86 26 H92 C96 26, 96 16, 92 16 H84 C66 16, 52 28, 52 44 V64 C52 70, 48 72, 42 72 C36 72, 32 68, 32 62 V18 Z"
+    fill="url(#fav-lf-gradient)"
+  />
+  <path
+    d="M52 56 H82 C86 56, 86 46, 82 46 H52 V56 Z"
+    fill="url(#fav-lf-gradient)"
+  />
 </svg>
