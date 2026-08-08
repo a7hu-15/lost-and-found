@@ -1,19 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="32" height="32">
   <defs>
-    <linearGradient id="fav-lf-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="fav-main-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FFB347" />
-      <stop offset="50%" stop-color="#FF8A00" />
+      <stop offset="45%" stop-color="#FF8A00" />
       <stop offset="100%" stop-color="#F97316" />
     </linearGradient>
+    <linearGradient id="fav-fold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E65100" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#FF8A00" stop-opacity="0.1" />
+    </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="22" fill="#09090b"/>
-  <rect width="96" height="96" x="2" y="2" rx="20" fill="none" stroke="#27272a" stroke-width="3"/>
+  <rect width="200" height="220" rx="36" fill="#09090b"/>
+  <rect width="192" height="212" x="4" y="4" rx="32" fill="none" stroke="#27272a" stroke-width="6"/>
   <path
-    d="M22 18 C22 14, 28 14, 32 18 V64 C32 78, 44 84, 52 84 C64 84, 68 76, 68 64 V56 H90 C95 56, 95 44, 90 44 H68 V38 C68 28, 76 26, 86 26 H92 C96 26, 96 16, 92 16 H84 C66 16, 52 28, 52 44 V64 C52 70, 48 72, 42 72 C36 72, 32 68, 32 62 V18 Z"
-    fill="url(#fav-lf-gradient)"
+    d="M 28 35 
+       C 28 20, 55 18, 62 38 
+       V 145 
+       C 62 185, 95 200, 115 200 
+       C 142 200, 155 182, 155 152 
+       V 135 
+       H 190 
+       C 202 135, 202 110, 190 110 
+       H 155 
+       V 80 
+       C 155 60, 175 56, 195 56 
+       C 205 56, 205 38, 195 38 
+       H 175 
+       C 138 38, 115 62, 115 95 
+       V 148 
+       C 115 162, 105 166, 92 166 
+       C 78 166, 68 158, 68 142 
+       V 35 Z"
+    fill="url(#fav-main-grad)"
   />
   <path
-    d="M52 56 H82 C86 56, 86 46, 82 46 H52 V56 Z"
-    fill="url(#fav-lf-gradient)"
+    d="M 115 135 H 180 C 190 135, 190 110, 180 110 H 115 V 135 Z"
+    fill="url(#fav-main-grad)"
+  />
+  <path
+    d="M 68 142 C 68 158, 78 166, 92 166 C 105 166, 115 162, 115 148 V 160 C 115 178, 98 190, 80 178 C 68 170, 68 155, 68 142 Z"
+    fill="url(#fav-fold-grad)"
   />
 </svg>
