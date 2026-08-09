@@ -345,7 +345,6 @@ export const ReportFound: React.FC = () => {
               <input
                 type="text"
                 required
-                maxLength={200}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Food Court Table 14"

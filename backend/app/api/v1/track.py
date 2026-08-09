@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.database.session import get_db
 from app.models.lost_item import LostItem
 from app.models.found_item import FoundItem
@@ -38,7 +39,10 @@ async def get_report_status(
         matches_res = await db.execute(
             select(MatchScore)
             .options(selectinload(MatchScore.found_item))
-            .where(MatchScore.lost_item_id == lost_item.id)
+            .where(
+                MatchScore.lost_item_id == lost_item.id,
+                MatchScore.similarity_score >= settings.MATCH_THRESHOLD
+            )
             .order_by(MatchScore.similarity_score.desc())
         )
         all_matches = matches_res.scalars().all()

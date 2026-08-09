@@ -2,6 +2,7 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import inspect
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -13,13 +14,28 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
     if not to_email:
         return
 
+    # INSTRUMENTATION: Identify exact caller
+    try:
+        stack = inspect.stack()
+        # stack[0] is this function, stack[1] is the caller
+        caller_func = stack[1].function
+        caller_file = stack[1].filename.split('/')[-1]
+    except Exception:
+        caller_func = "unknown"
+        caller_file = "unknown"
+
     logger.info(f"========== EMAIL DISPATCH ==========")
+    logger.info(f"TYPE: {subject}")
+    logger.info(f"CALLER: {caller_file} -> {caller_func}()")
     logger.info(f"TO: {to_email}")
-    logger.info(f"SUBJECT: {subject}")
     logger.info(f"BODY:\n{body_text}")
     logger.info(f"=====================================")
 
     if not settings.SMTP_HOST or not settings.SMTP_USER:
+        return
+
+    if settings.MOCK_SMTP:
+        logger.info(f"MOCK SMTP ENABLED: Bypassed physical email dispatch to {to_email}")
         return
 
     try:
@@ -104,56 +120,6 @@ SRM Campus Security & Lost & Found Team
         <div class="footer">
           Please keep this email receipt. If you ever forget your Report ID, simply search your inbox for <strong>Lost &amp; Found</strong> or <strong>{report_id[:9]}</strong> to recover your status link.
         </div>
-      </div>
-    </body>
-    </html>
-    """
-
-    send_email(email, subject, text_content, html_content)
-
-
-def send_match_alert_email(email: str, report_id: str, access_token: str, match_score: float, matched_title: str):
-    tracking_url = f"http://localhost:5173/track?report_id={report_id}&token={access_token}"
-    subject = f"Possible Match Found ({match_score:.0f}%) • Lost & Found"
-    
-    text_content = f"""Possible Match Found!
-
-Our matching engine found a potential match for your report {report_id}.
-
-Matched Item: {matched_title}
-Match Score: {match_score:.0f}%
-
-Review & Track Match Here:
-{tracking_url}
-
-Campus Security & Lost & Found Team
-"""
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
-        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
-        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
-        .score-box {{ background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 16px; border-radius: 6px; margin: 20px 0; font-family: monospace; }}
-        .btn {{ background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">Possible Match Found ({match_score:.0f}%)</div>
-        <div style="font-size: 13px; color: #71717a;">Our rule engine matched your report {report_id} with a turned-in item.</div>
-
-        <div class="score-box">
-          <div style="font-size: 11px; text-transform: uppercase;">Similarity Confidence Score</div>
-          <div style="font-size: 22px; font-weight: bold;">{match_score:.0f}% Match</div>
-          <div style="font-size: 13px; margin-top: 4px;">Matched Item: {matched_title}</div>
-        </div>
-
-        <a href="{tracking_url}" class="btn">Review Match Details &rarr;</a>
       </div>
     </body>
     </html>

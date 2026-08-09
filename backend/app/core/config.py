@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Cloud Lost & Found Platform"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
+    MATCH_THRESHOLD: float = 80.0
     
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-change-this-in-production-32bytes-min!")
     ALGORITHM: str = "HS256"
@@ -46,6 +47,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_TLS: bool = True
     SMTP_FROM: str = "cloudlostfound.platform@gmail.com"
+    MOCK_SMTP: bool = False
 
     class Config:
         case_sensitive = True

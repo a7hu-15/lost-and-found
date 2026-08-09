@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.database.session import get_db
 from app.models.match import MatchScore, MatchStatus
 from app.schemas.match import MatchScoreOut
@@ -14,7 +15,7 @@ router = APIRouter()
 
 @router.get("", response_model=List[MatchScoreOut])
 async def get_matches(
-    min_score: float = 50.0,
+    min_score: float = settings.MATCH_THRESHOLD,
     db: AsyncSession = Depends(get_db)
 ):
     query = (

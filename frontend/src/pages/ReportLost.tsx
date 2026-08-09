@@ -318,7 +318,6 @@ export const ReportLost: React.FC = () => {
               <input
                 type="text"
                 required
-                maxLength={200}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Central Library 2nd Floor, Food Court Table 12"

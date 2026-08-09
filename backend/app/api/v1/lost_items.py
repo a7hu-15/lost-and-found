@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.database.session import get_db
 from app.models.lost_item import LostItem, ItemStatus, generate_report_id, generate_access_token
 from app.models.found_item import FoundItem
@@ -12,7 +13,7 @@ from app.models.match import MatchScore
 from app.models.audit import AuditLog
 from app.schemas.lost_item import LostItemCreate, LostItemOut
 from app.matching.engine import calculate_item_similarity
-from app.notifications.service import send_report_confirmation_email, send_match_alert_email
+from app.notifications.service import send_report_confirmation_email
 from app.services.image_service import process_and_store_image
 
 import re
@@ -117,7 +118,8 @@ async def create_lost_item(
     highest_score = 0.0
     for found in found_items:
         score, breakdown = calculate_item_similarity(lost_item, found)
-        if score >= 50.0:
+        # Discard low-confidence candidates (< settings.MATCH_THRESHOLD)
+        if score >= settings.MATCH_THRESHOLD:
             existing_match = await db.execute(
                 select(MatchScore).where(
                     MatchScore.lost_item_id == lost_item.id,
@@ -134,15 +136,9 @@ async def create_lost_item(
                 db.add(match)
             if score > highest_score:
                 highest_score = score
-                send_match_alert_email(
-                    email=lost_item.contact_email,
-                    report_id=lost_item.report_id,
-                    access_token=lost_item.access_token,
-                    match_score=score,
-                    matched_title=found.title
-                )
+            # NOTE: Automatic match alert emails removed per user specification (ZERO match emails sent)
 
-    if highest_score >= 70.0:
+    if highest_score >= settings.MATCH_THRESHOLD:
         lost_item.status = ItemStatus.MATCHED
 
     # Audit log
