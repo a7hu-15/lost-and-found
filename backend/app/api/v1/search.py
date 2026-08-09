@@ -9,6 +9,8 @@ from app.models.found_item import FoundItem
 from app.schemas.lost_item import LostItemOut
 from app.schemas.found_item import FoundItemOut
 
+from fastapi import APIRouter, Depends, Query, HTTPException, status
+
 router = APIRouter()
 
 @router.get("", response_model=Dict[str, Any])
@@ -19,6 +21,15 @@ async def search_items(
     color: Optional[str] = Query(None, description="Filter by color"),
     db: AsyncSession = Depends(get_db)
 ):
+    if q and len(q.strip()) > 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Search query must not exceed 200 characters.")
+    if category and len(category.strip()) > 50:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category filter must not exceed 50 characters.")
+    if location and len(location.strip()) > 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Location filter must not exceed 200 characters.")
+    if color and len(color.strip()) > 50:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Color filter must not exceed 50 characters.")
+
     # Query lost items (Excluding HIDDEN items)
     lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN)
     if q:

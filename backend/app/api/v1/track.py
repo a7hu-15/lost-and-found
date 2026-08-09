@@ -22,6 +22,11 @@ async def get_report_status(
     token: Optional[str] = None,
     db: AsyncSession = Depends(get_db)
 ):
+    if len(report_id.strip()) > 50:
+        raise HTTPException(status_code=400, detail="Invalid Report ID format.")
+    if token and len(token.strip()) > 100:
+        raise HTTPException(status_code=400, detail="Invalid Access Token format.")
+
     # Check LostItems first
     lost_res = await db.execute(select(LostItem).where(LostItem.report_id == report_id))
     lost_item = lost_res.scalar_one_or_none()
@@ -36,12 +41,20 @@ async def get_report_status(
             .where(MatchScore.lost_item_id == lost_item.id)
             .order_by(MatchScore.similarity_score.desc())
         )
-        matches = matches_res.scalars().all()
+        all_matches = matches_res.scalars().all()
+
+        # Deduplicate matches by found_item_id
+        seen_found_ids = set()
+        unique_matches = []
+        for m in all_matches:
+            if m.found_item_id and m.found_item_id not in seen_found_ids:
+                seen_found_ids.add(m.found_item_id)
+                unique_matches.append(m)
 
         return {
             "type": "lost",
             "report": lost_item,
-            "matches": matches
+            "matches": unique_matches
         }
 
     # Check FoundItems

@@ -1,8 +1,24 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Upload, Sparkles, ExternalLink, Lock } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Lock, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { ImageUploader } from '../components/ImageUploader';
+
+const validateIndianMobile = (phone: string): { isValid: boolean; normalized?: string } => {
+  if (!phone || !phone.trim()) return { isValid: true };
+  const phoneRaw = phone.trim();
+  const digits = phoneRaw.replace(/\D/g, '');
+  let coreDigits = digits;
+  if (phoneRaw.startsWith('+91')) {
+    coreDigits = digits.startsWith('91') ? digits.slice(2) : digits;
+  } else if (digits.length === 12 && digits.startsWith('91')) {
+    coreDigits = digits.slice(2);
+  }
+  if (!/^[6-9]\d{9}$/.test(coreDigits)) {
+    return { isValid: false };
+  }
+  return { isValid: true, normalized: phoneRaw.startsWith('+91') ? `+91${coreDigits}` : coreDigits };
+};
 
 export const ReportFound: React.FC = () => {
   const locationState = useLocation().state as { linkedLostItem?: any } | undefined;
@@ -36,12 +52,25 @@ export const ReportFound: React.FC = () => {
   ];
 
   const handleAIDetected = (detected: { category: string; brand: string; color: string }) => {
-    if (detected.category) setCategory(detected.category);
-    if (detected.brand) setBrand(detected.brand);
-    if (detected.color) setColor(detected.color);
+    if (detected.category) setCategory(detected.category.slice(0, 50));
+    if (detected.brand) setBrand(detected.brand.slice(0, 50));
+    if (detected.color) setColor(detected.color.slice(0, 50));
+  };
+
+  const handleNextFromStep1 = () => {
+    if (title.trim().length > 100) {
+      setError('Item Title must not exceed 100 characters.');
+      return;
+    }
+    setError('');
+    setStep(2);
   };
 
   const handleNextFromStep2 = () => {
+    if (location.trim().length > 200) {
+      setError('Location must not exceed 200 characters.');
+      return;
+    }
     const todayStr = new Date().toISOString().split('T')[0];
     if (foundDate > todayStr) {
       setError('Date Found cannot be in the future.');
@@ -51,9 +80,41 @@ export const ReportFound: React.FC = () => {
     setStep(3);
   };
 
+  const handleNextFromStep3 = () => {
+    const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount > 100) {
+      setError(`Description exceeds the maximum limit of 100 words (currently ${wordCount} words).`);
+      return;
+    }
+    setError('');
+    setStep(4);
+  };
+
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const calculatedTitle = (title || `${color} ${brand} ${category}`).trim();
+    if (calculatedTitle.length > 100) {
+      setError('Item Title must not exceed 100 characters.');
+      return;
+    }
+
+    if (location.trim().length > 200) {
+      setError('Location must not exceed 200 characters.');
+      return;
+    }
+
+    const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount > 100) {
+      setError(`Description exceeds the maximum limit of 100 words (currently ${wordCount} words).`);
+      return;
+    }
+
+    if (contactEmail.trim().length > 254) {
+      setError('Email address must not exceed 254 characters.');
+      return;
+    }
 
     const todayStr = new Date().toISOString().split('T')[0];
     if (foundDate > todayStr) {
@@ -61,21 +122,17 @@ export const ReportFound: React.FC = () => {
       return;
     }
 
-    if (contactPhone && contactPhone.trim()) {
-      const phoneStr = contactPhone.trim();
-      const digits = phoneStr.replace(/\D/g, '');
-      const phoneRegex = /^\+?[0-9\s\-\(\)]{7,15}$/;
-      if (!phoneRegex.test(phoneStr) || digits.length < 7 || digits.length > 15) {
-        setError('Please enter a valid phone number (7–15 digits) or leave the field blank.');
-        return;
-      }
+    const phoneValidation = validateIndianMobile(contactPhone);
+    if (!phoneValidation.isValid) {
+      setError('Please enter a valid Indian mobile number (10 digits starting with 6–9), or leave the field blank.');
+      return;
     }
 
     setLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append('title', title || `${color} ${brand} ${category}`.trim());
+      formData.append('title', calculatedTitle);
       formData.append('category', category);
       if (brand) formData.append('brand', brand);
       if (color) formData.append('color', color);
@@ -84,7 +141,9 @@ export const ReportFound: React.FC = () => {
       formData.append('description', description);
       formData.append('storage_location', storageLocation);
       formData.append('contact_email', contactEmail);
-      if (contactPhone) formData.append('contact_phone', contactPhone);
+      if (contactPhone && phoneValidation.normalized) {
+        formData.append('contact_phone', phoneValidation.normalized);
+      }
       if (linkedLostItem) formData.append('lost_item_id', linkedLostItem.id);
       if (uploadedFile) formData.append('file', uploadedFile);
 
@@ -210,10 +269,11 @@ export const ReportFound: React.FC = () => {
             />
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Item Title / Category Name *</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Item Title / Category Name * (Max 100 chars)</label>
               <input
                 type="text"
                 required
+                maxLength={100}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Silver Macbook Pro 14-inch"
@@ -226,6 +286,7 @@ export const ReportFound: React.FC = () => {
                 <label className="block text-xs font-medium text-zinc-300 mb-1">Category</label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="Electronics"
@@ -237,6 +298,7 @@ export const ReportFound: React.FC = () => {
                 <label className="block text-xs font-medium text-zinc-300 mb-1">Brand (Optional)</label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   placeholder="Apple"
@@ -248,6 +310,7 @@ export const ReportFound: React.FC = () => {
                 <label className="block text-xs font-medium text-zinc-300 mb-1">Color (Optional)</label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
                   placeholder="Silver"
@@ -260,7 +323,7 @@ export const ReportFound: React.FC = () => {
               <button
                 type="button"
                 disabled={!title.trim() || !uploadedFile}
-                onClick={() => setStep(2)}
+                onClick={handleNextFromStep1}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
                 Next: Location &amp; Holding Desk <ArrowRight className="w-3.5 h-3.5" />
@@ -278,10 +341,11 @@ export const ReportFound: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Where Found *</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Where Found * (Max 200 chars)</label>
               <input
                 type="text"
                 required
+                maxLength={200}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Food Court Table 14"
@@ -345,7 +409,7 @@ export const ReportFound: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">Step 3: Item Description</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Describe visible condition and any distinguishing features</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Describe visible condition and any distinguishing features (Max 100 words)</p>
             </div>
 
             <div>
@@ -358,6 +422,9 @@ export const ReportFound: React.FC = () => {
                 placeholder="e.g. Found on table 14 after lunch rush. Silver case, scratch on bottom left corner."
                 className="saas-input w-full p-3"
               />
+              <div className="text-[11px] text-zinc-500 mt-1 text-right font-mono">
+                {description.trim().split(/\s+/).filter(Boolean).length} / 100 words
+              </div>
             </div>
 
             <div className="flex justify-between pt-2">
@@ -371,7 +438,7 @@ export const ReportFound: React.FC = () => {
               <button
                 type="button"
                 disabled={!description.trim()}
-                onClick={() => setStep(4)}
+                onClick={handleNextFromStep3}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
                 Next: Your Contact Details <ArrowRight className="w-3.5 h-3.5" />
@@ -389,10 +456,11 @@ export const ReportFound: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Email Address * (Never shared publicly)</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Email Address * (Max 254 chars)</label>
               <input
                 type="email"
                 required
+                maxLength={254}
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 placeholder="your.email@university.edu"
@@ -401,14 +469,18 @@ export const ReportFound: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Phone Number (Optional)</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Indian Mobile Number (Optional)</label>
               <input
                 type="tel"
+                maxLength={15}
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 234 567 8900 or 9876543210"
+                placeholder="9876543210 or +919876543210"
                 className="saas-input w-full py-2 px-3"
               />
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Enter a 10-digit Indian mobile number starting with 6–9, optionally with +91 prefix.
+              </p>
             </div>
 
             {/* Trust Indicators */}

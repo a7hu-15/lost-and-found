@@ -35,22 +35,45 @@ async def create_found_item(
     file: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db)
 ):
+    # Server-side validation: Length and boundary checks
+    if len(title.strip()) > 100:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Title must not exceed 100 characters.")
+    if len(location.strip()) > 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Location must not exceed 200 characters.")
+    if storage_location and len(storage_location.strip()) > 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Storage location must not exceed 200 characters.")
+    if len(description.strip().split()) > 100:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description exceeds the maximum limit of 100 words.")
+    if len(contact_email.strip()) > 254:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email address must not exceed 254 characters.")
+    if category and len(category.strip()) > 50:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category must not exceed 50 characters.")
+    if brand and len(brand.strip()) > 50:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Brand must not exceed 50 characters.")
+    if color and len(color.strip()) > 50:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Color must not exceed 50 characters.")
+
     # Server-side validation: Future date check
     if found_date > date_cls.today():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Date found cannot be in the future."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date found cannot be in the future.")
 
-    # Server-side validation: Phone number format check
+    # Server-side validation: Indian mobile number format check
     if contact_phone and contact_phone.strip():
-        phone_str = contact_phone.strip()
-        digits = re.sub(r'\D', '', phone_str)
-        if not re.match(r'^\+?[0-9\s\-\(\)]{7,15}$', phone_str) or not (7 <= len(digits) <= 15):
+        phone_raw = contact_phone.strip()
+        digits = re.sub(r'\D', '', phone_raw)
+        if phone_raw.startswith('+91'):
+            core_digits = digits[2:] if digits.startswith('91') else digits
+        elif len(digits) == 12 and digits.startswith('91'):
+            core_digits = digits[2:]
+        else:
+            core_digits = digits
+
+        if not re.match(r'^[6-9]\d{9}$', core_digits):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid phone number format. Please provide a valid phone number (7–15 digits) or leave it empty."
+                detail="Please enter a valid Indian mobile number (10 digits starting with 6–9), or leave the field blank."
             )
+        contact_phone = f"+91{core_digits}" if phone_raw.startswith('+91') else core_digits
 
     report_id = generate_report_id()
     access_token = generate_access_token()
@@ -119,13 +142,20 @@ async def create_found_item(
     for lost in lost_items:
         score, breakdown = calculate_item_similarity(lost, found_item)
         if score >= 50.0:
-            match = MatchScore(
-                lost_item_id=lost.id,
-                found_item_id=found_item.id,
-                similarity_score=score,
-                breakdown_json=breakdown
+            existing_match = await db.execute(
+                select(MatchScore).where(
+                    MatchScore.lost_item_id == lost.id,
+                    MatchScore.found_item_id == found_item.id
+                )
             )
-            db.add(match)
+            if not existing_match.scalar_one_or_none():
+                match = MatchScore(
+                    lost_item_id=lost.id,
+                    found_item_id=found_item.id,
+                    similarity_score=score,
+                    breakdown_json=breakdown
+                )
+                db.add(match)
             if score > highest_score:
                 highest_score = score
                 send_match_alert_email(

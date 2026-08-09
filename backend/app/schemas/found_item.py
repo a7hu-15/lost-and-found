@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime, date
 from app.models.lost_item import ItemStatus
+from app.schemas.lost_item import validate_indian_mobile, validate_description_words
 
 class FoundItemCreate(BaseModel):
     title: str
@@ -17,6 +18,39 @@ class FoundItemCreate(BaseModel):
     contact_email: EmailStr
     contact_phone: Optional[str] = None
 
+    @field_validator('title')
+    @classmethod
+    def validate_title_len(cls, v: str) -> str:
+        if len(v.strip()) > 100:
+            raise ValueError("Title must not exceed 100 characters.")
+        return v
+
+    @field_validator('location', 'storage_location')
+    @classmethod
+    def validate_location_len(cls, v: str) -> str:
+        if len(v.strip()) > 200:
+            raise ValueError("Location must not exceed 200 characters.")
+        return v
+
+    @field_validator('category', 'brand', 'color')
+    @classmethod
+    def validate_short_attr_len(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v.strip()) > 50:
+            raise ValueError("Category, brand, and color must not exceed 50 characters each.")
+        return v
+
+    @field_validator('contact_email')
+    @classmethod
+    def validate_email_len(cls, v: EmailStr) -> EmailStr:
+        if len(str(v)) > 254:
+            raise ValueError("Email address must not exceed 254 characters.")
+        return v
+
+    @field_validator('description')
+    @classmethod
+    def validate_desc(cls, v: str) -> str:
+        return validate_description_words(v)
+
     @field_validator('found_date')
     @classmethod
     def validate_found_date(cls, v: date) -> date:
@@ -26,14 +60,8 @@ class FoundItemCreate(BaseModel):
 
     @field_validator('contact_phone')
     @classmethod
-    def validate_contact_phone(cls, v: Optional[str]) -> Optional[str]:
-        if not v or not v.strip():
-            return None
-        v_str = v.strip()
-        digits = re.sub(r'\D', '', v_str)
-        if not re.match(r'^\+?[0-9\s\-\(\)]{7,15}$', v_str) or not (7 <= len(digits) <= 15):
-            raise ValueError("Invalid phone number format. Please provide a valid phone number (7–15 digits).")
-        return v_str
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        return validate_indian_mobile(v)
 
 class FoundItemOut(BaseModel):
     id: str

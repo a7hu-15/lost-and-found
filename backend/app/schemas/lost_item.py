@@ -4,6 +4,32 @@ from typing import Optional
 from datetime import datetime, date
 from app.models.lost_item import ItemStatus
 
+def validate_indian_mobile(v: Optional[str]) -> Optional[str]:
+    if not v or not v.strip():
+        return None
+    phone_raw = v.strip()
+    digits = re.sub(r'\D', '', phone_raw)
+    
+    if phone_raw.startswith('+91'):
+        core_digits = digits[2:] if digits.startswith('91') else digits
+    elif len(digits) == 12 and digits.startswith('91'):
+        core_digits = digits[2:]
+    else:
+        core_digits = digits
+        
+    if not re.match(r'^[6-9]\d{9}$', core_digits):
+        raise ValueError("Please enter a valid Indian mobile number (10 digits starting with 6–9), or leave the field blank.")
+        
+    return f"+91{core_digits}" if phone_raw.startswith('+91') else core_digits
+
+def validate_description_words(v: str) -> str:
+    if not v or not v.strip():
+        raise ValueError("Description is required.")
+    words = v.strip().split()
+    if len(words) > 100:
+        raise ValueError(f"Description exceeds the maximum limit of 100 words (currently {len(words)} words).")
+    return v
+
 class LostItemCreate(BaseModel):
     title: str
     category: str
@@ -17,6 +43,39 @@ class LostItemCreate(BaseModel):
     contact_email: EmailStr
     contact_phone: Optional[str] = None
 
+    @field_validator('title')
+    @classmethod
+    def validate_title_len(cls, v: str) -> str:
+        if len(v.strip()) > 100:
+            raise ValueError("Title must not exceed 100 characters.")
+        return v
+
+    @field_validator('location')
+    @classmethod
+    def validate_location_len(cls, v: str) -> str:
+        if len(v.strip()) > 200:
+            raise ValueError("Location must not exceed 200 characters.")
+        return v
+
+    @field_validator('category', 'brand', 'color')
+    @classmethod
+    def validate_short_attr_len(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v.strip()) > 50:
+            raise ValueError("Category, brand, and color must not exceed 50 characters each.")
+        return v
+
+    @field_validator('contact_email')
+    @classmethod
+    def validate_email_len(cls, v: EmailStr) -> EmailStr:
+        if len(str(v)) > 254:
+            raise ValueError("Email address must not exceed 254 characters.")
+        return v
+
+    @field_validator('description')
+    @classmethod
+    def validate_desc(cls, v: str) -> str:
+        return validate_description_words(v)
+
     @field_validator('lost_date')
     @classmethod
     def validate_lost_date(cls, v: date) -> date:
@@ -26,14 +85,8 @@ class LostItemCreate(BaseModel):
 
     @field_validator('contact_phone')
     @classmethod
-    def validate_contact_phone(cls, v: Optional[str]) -> Optional[str]:
-        if not v or not v.strip():
-            return None
-        v_str = v.strip()
-        digits = re.sub(r'\D', '', v_str)
-        if not re.match(r'^\+?[0-9\s\-\(\)]{7,15}$', v_str) or not (7 <= len(digits) <= 15):
-            raise ValueError("Invalid phone number format. Please provide a valid phone number (7–15 digits).")
-        return v_str
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        return validate_indian_mobile(v)
 
 class LostItemOut(BaseModel):
     id: str
