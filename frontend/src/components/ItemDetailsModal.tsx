@@ -1,7 +1,8 @@
-import React from 'react';
-import { X, MapPin, Calendar, Shield, Tag, ArrowUpRight, Image as ImageIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, MapPin, Calendar, Shield, Tag, ArrowUpRight, Image as ImageIcon, Info, CheckCircle2 } from 'lucide-react';
 import { LostItem, FoundItem } from '../types';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 interface ItemDetailsModalProps {
   item: LostItem | FoundItem | null;
@@ -11,6 +12,14 @@ interface ItemDetailsModalProps {
 
 export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, onClose }) => {
   const navigate = useNavigate();
+  const [showInfoForm, setShowInfoForm] = useState(false);
+  const [infoMessage, setInfoMessage] = useState('');
+  const [infoName, setInfoName] = useState('');
+  const [infoEmail, setInfoEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
   if (!item) return null;
 
   const isLost = type === 'lost';
@@ -143,7 +152,101 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
           >
             Track Report
           </button>
+          
+          {isLost && (
+            <button
+              onClick={() => setShowInfoForm(!showInfoForm)}
+              className={`${showInfoForm ? 'bg-zinc-800 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20'} text-xs w-full py-2.5 rounded border border-transparent flex items-center justify-center gap-1.5 font-semibold transition-colors`}
+            >
+              <Info className="w-4 h-4" /> I Have Information
+            </button>
+          )}
         </div>
+
+        {/* I Have Information Form */}
+        {showInfoForm && isLost && (
+          <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 mt-4 animate-in fade-in slide-in-from-top-2">
+            {submitSuccess ? (
+              <div className="text-center py-6 space-y-3">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                <div>
+                  <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Information Submitted</h4>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Thank you! Our staff will review your tip shortly.</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                setSubmitError('');
+                try {
+                  await api.post(`/api/v1/lost_items/${item.report_id}/information`, {
+                    message: infoMessage,
+                    sender_name: infoName || undefined,
+                    sender_email: infoEmail || undefined
+                  });
+                  setSubmitSuccess(true);
+                } catch (err: any) {
+                  setSubmitError(err.response?.data?.detail || 'Failed to submit information. Please try again.');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }} className="space-y-3">
+                <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Info className="w-4 h-4 text-blue-500" /> Send Information
+                </h4>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Tell us what you know about this item. Your information will be reviewed by campus security before being securely passed to the owner.
+                </p>
+                
+                {submitError && (
+                  <div className="p-2 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 rounded text-xs">
+                    {submitError}
+                  </div>
+                )}
+                
+                <div>
+                  <textarea
+                    required
+                    minLength={10}
+                    maxLength={1000}
+                    value={infoMessage}
+                    onChange={(e) => setInfoMessage(e.target.value)}
+                    placeholder="E.g., I saw an AirPods case near the library entrance..."
+                    className="saas-input text-xs min-h-[80px] w-full"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={infoName}
+                    onChange={(e) => setInfoName(e.target.value)}
+                    placeholder="Your Name (Optional)"
+                    className="saas-input text-xs w-full"
+                  />
+                  <input
+                    type="email"
+                    value={infoEmail}
+                    onChange={(e) => setInfoEmail(e.target.value)}
+                    placeholder="Your Email (Optional)"
+                    className="saas-input text-xs w-full"
+                  />
+                </div>
+                
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || infoMessage.length < 10}
+                    className="saas-button-primary w-full py-2 text-xs"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Information'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
 
       </div>
     </div>

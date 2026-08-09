@@ -52,3 +52,4 @@ class LostItem(Base):
 
     user = relationship("User", back_populates="lost_items")
     matches = relationship("MatchScore", back_populates="lost_item", cascade="all, delete-orphan")
+    information_tips = relationship("LostItemInformation", back_populates="lost_item", cascade="all, delete-orphan")

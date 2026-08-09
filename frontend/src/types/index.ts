@@ -134,3 +134,17 @@ export interface StaffMemberOut {
   is_active: boolean;
   created_at: string;
 }
+
+export type TipStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface ItemInformation {
+  id: string;
+  lost_item_id: string;
+  sender_name?: string;
+  sender_email?: string;
+  message: string;
+  status: TipStatus;
+  created_at: string;
+  reviewed_at?: string;
+  reviewed_by_id?: string;
+}

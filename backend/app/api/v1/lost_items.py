@@ -180,3 +180,50 @@ async def get_lost_item(item_id: str, db: AsyncSession = Depends(get_db)):
     if not item:
         raise HTTPException(status_code=404, detail="Lost item not found")
     return item
+
+from fastapi import Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from app.models.item_information import LostItemInformation
+from app.schemas.item_information import ItemInformationCreate, ItemInformationOut
+from app.notifications.service import send_information_submitted_platform_email
+
+route_limiter = Limiter(key_func=get_remote_address)
+
+@router.post("/{report_id}/information", response_model=ItemInformationOut, status_code=status.HTTP_201_CREATED)
+@route_limiter.limit("5/minute")
+async def submit_item_information(
+    report_id: str,
+    payload: ItemInformationCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    # Verify the lost item exists
+    result = await db.execute(select(LostItem).where(LostItem.report_id == report_id))
+    lost_item = result.scalar_one_or_none()
+    if not lost_item:
+        raise HTTPException(status_code=404, detail="Lost item not found")
+
+    # Save to database
+    info = LostItemInformation(
+        lost_item_id=lost_item.id,
+        sender_name=payload.sender_name,
+        sender_email=payload.sender_email,
+        message=payload.message
+    )
+    db.add(info)
+    await db.commit()
+    await db.refresh(info)
+
+    # Dispatch email to platform
+    sender_details = f"{payload.sender_name or 'Anonymous'} ({payload.sender_email or 'No email'})"
+    send_information_submitted_platform_email(
+        report_id=lost_item.report_id,
+        item_title=lost_item.title,
+        location=lost_item.location,
+        lost_date=str(lost_item.lost_date),
+        message=payload.message,
+        sender_info=sender_details
+    )
+
+    return info

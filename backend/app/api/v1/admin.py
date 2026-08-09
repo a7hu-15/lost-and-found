@@ -22,6 +22,9 @@ from app.schemas.auth import UserOut
 from app.schemas.support import SupportTicketOut, SupportTicketStatusUpdate
 from app.schemas.lost_item import LostItemOut
 from app.schemas.found_item import FoundItemOut
+from app.schemas.item_information import ItemInformationOut, ItemInformationReview
+from app.models.item_information import LostItemInformation, TipStatus
+from app.notifications.service import send_information_approved_owner_email
 from app.security.passwords import verify_password
 from app.security.dependencies import (
     get_current_user, require_admin_owner, require_permission, require_any_admin
@@ -420,3 +423,48 @@ async def get_audit_logs(
 ):
     result = await db.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit))
     return result.scalars().all()
+
+@router.get("/information", response_model=List[ItemInformationOut])
+async def list_information_tips(
+    status: Optional[TipStatus] = None,
+    current_user: User = Depends(require_permission("manage_items")),
+    db: AsyncSession = Depends(get_db)
+):
+    query = select(LostItemInformation).order_by(LostItemInformation.created_at.desc())
+    if status:
+        query = query.where(LostItemInformation.status == status)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+@router.patch("/information/{info_id}/status", response_model=ItemInformationOut)
+async def update_information_status(
+    info_id: str,
+    payload: ItemInformationReview,
+    current_user: User = Depends(require_permission("manage_items")),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(LostItemInformation).where(LostItemInformation.id == info_id))
+    info = result.scalar_one_or_none()
+    if not info:
+        raise HTTPException(status_code=404, detail="Information tip not found")
+
+    old_status = info.status
+    info.status = payload.status
+    info.reviewed_at = datetime.utcnow()
+    info.reviewed_by_id = current_user.id
+    
+    await db.commit()
+    await db.refresh(info)
+
+    if info.status == TipStatus.APPROVED and old_status != TipStatus.APPROVED:
+        # Fetch lost item to get contact email
+        lost_item_res = await db.execute(select(LostItem).where(LostItem.id == info.lost_item_id))
+        lost_item = lost_item_res.scalar_one_or_none()
+        if lost_item:
+            send_information_approved_owner_email(
+                email=lost_item.contact_email,
+                message=info.message,
+                report_id=lost_item.report_id
+            )
+
+    return info

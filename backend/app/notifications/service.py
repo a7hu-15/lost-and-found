@@ -259,3 +259,102 @@ Campus Administration Security
     """
 
     send_email(email, subject, text_content, html_content)
+
+def send_information_submitted_platform_email(report_id: str, item_title: str, location: str, lost_date: str, message: str, sender_info: str):
+    subject = f"New Information Submitted — Lost Item [{report_id}]"
+    
+    text_content = f"""New Information Submitted — Lost Item
+
+Lost Report: {report_id}
+Item: {item_title}
+Location: {location}
+Lost Date: {lost_date}
+
+Message from visitor:
+{message}
+
+Submitted by:
+{sender_info}
+
+Please log in to the admin dashboard to review this information.
+"""
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: bold; margin-bottom: 16px; }}
+        .info-box {{ background: #f4f4f5; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 16px; }}
+        .message-box {{ font-size: 14px; line-height: 1.6; padding: 16px; border-left: 4px solid #2563eb; background: #eff6ff; margin-bottom: 16px; white-space: pre-wrap; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">New Information Submitted</div>
+        <div class="info-box">
+          <strong>Report:</strong> {report_id}<br/>
+          <strong>Item:</strong> {item_title}<br/>
+          <strong>Location:</strong> {location}<br/>
+          <strong>Lost Date:</strong> {lost_date}
+        </div>
+        <div class="message-box">{message}</div>
+        <div style="font-size: 12px; color: #71717a; margin-bottom: 16px;">
+          <strong>Submitted by:</strong> {sender_info}
+        </div>
+        <p style="font-size: 13px; color: #52525b;">Please review this information in the admin dashboard.</p>
+      </div>
+    </body>
+    </html>
+    """
+
+    send_email(settings.SUPPORT_EMAIL, subject, text_content, html_content)
+
+
+def send_information_approved_owner_email(email: str, message: str, report_id: str):
+    tracking_url = f"http://localhost:5173/track"
+    subject = f"Someone Submitted Information About Your Lost Item ({report_id})"
+    
+    text_content = f"""Someone Submitted Information About Your Lost Item
+
+Someone has provided information regarding your lost item report ({report_id}).
+
+Message:
+{message}
+
+Please check your report/tracking page for further details:
+{tracking_url}
+
+Campus Security & Lost & Found Team
+"""
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
+        .header {{ font-size: 18px; font-weight: bold; margin-bottom: 16px; }}
+        .message-box {{ font-size: 14px; line-height: 1.6; padding: 16px; border-left: 4px solid #10b981; background: #ecfdf5; margin-bottom: 16px; white-space: pre-wrap; }}
+        .btn {{ background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Information About Your Lost Item</div>
+        <p style="font-size: 14px; color: #3f3f46;">Someone has provided information regarding your lost item report <strong>{report_id}</strong>.</p>
+        <div class="message-box">{message}</div>
+        <div style="margin: 24px 0;">
+          <a href="{tracking_url}" class="btn">Track My Report &rarr;</a>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    send_email(email, subject, text_content, html_content)
