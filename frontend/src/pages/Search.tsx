@@ -180,8 +180,8 @@ export const Search: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {lostItems.map((item) => (
-                <div key={item.id} onClick={() => setSelectedModalItem({ item, type: 'lost' })} className="cursor-pointer">
-                  <ItemCard item={item} type="lost" />
+                <div key={item.id} className="cursor-pointer">
+                  <ItemCard item={item} type="lost" onViewDetails={() => setSelectedModalItem({ item, type: 'lost' })} />
                 </div>
               ))}
             </div>
@@ -206,8 +206,8 @@ export const Search: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {foundItems.map((item) => (
-                <div key={item.id} onClick={() => setSelectedModalItem({ item, type: 'found' })} className="cursor-pointer">
-                  <ItemCard item={item} type="found" />
+                <div key={item.id} className="cursor-pointer">
+                  <ItemCard item={item} type="found" onViewDetails={() => setSelectedModalItem({ item, type: 'found' })} />
                 </div>
               ))}
             </div>

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,7 +16,8 @@ from app.notifications.service import send_report_confirmation_email
 from app.services.image_service import process_and_store_image
 
 import re
-from datetime import date as date_cls
+import asyncio
+_creation_lock = asyncio.Lock()
 
 router = APIRouter()
 
@@ -43,6 +44,8 @@ async def create_found_item(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Location must not exceed 200 characters.")
     if storage_location and len(storage_location.strip()) > 200:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Storage location must not exceed 200 characters.")
+    if len(description) > 2000:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description must not exceed 2000 characters.")
     if len(description.strip().split()) > 100:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description exceeds the maximum limit of 100 words.")
     if len(contact_email.strip()) > 254:
@@ -55,7 +58,7 @@ async def create_found_item(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Color must not exceed 50 characters.")
 
     # Server-side validation: Future date check
-    if found_date > date_cls.today():
+    if found_date > date.today():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date found cannot be in the future.")
 
     # Server-side validation: Indian mobile number format check
@@ -76,42 +79,46 @@ async def create_found_item(
             )
         contact_phone = f"+91{core_digits}" if phone_raw.startswith('+91') else core_digits
 
-    report_id = generate_report_id()
-    access_token = generate_access_token()
-
-    # Process image if uploaded
-    image_url = None
-    thumbnail_url = None
-    if file and file.filename:
-        image_url, thumbnail_url = await process_and_store_image(file)
-
-    found_item = FoundItem(
-        report_id=report_id,
-        access_token=access_token,
-        title=title,
-        category=category,
-        brand=brand,
-        color=color,
-        location=location,
-        found_date=found_date,
-        description=description,
-        storage_location=storage_location,
-        image_url=image_url,
-        thumbnail_url=thumbnail_url,
-        contact_email=contact_email,
-        contact_phone=contact_phone,
-        status=ItemStatus.REPORTED
-    )
-    db.add(found_item)
-    await db.flush()
-
-    # Send confirmation email
-    send_report_confirmation_email(
-        email=found_item.contact_email,
-        report_id=found_item.report_id,
-        access_token=found_item.access_token,
-        item_title=found_item.title
-    )
+    async with _creation_lock:
+        # Prevent duplicate submissions (Debounce / Idempotency)
+        recent_item = await db.execute(
+            select(FoundItem).where(
+                FoundItem.contact_email == contact_email,
+                FoundItem.title == title,
+                FoundItem.created_at >= (datetime.utcnow() - timedelta(minutes=5))
+            )
+        )
+        if recent_item.scalars().first():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A similar report was recently submitted.")
+    
+        report_id = generate_report_id()
+        access_token = generate_access_token()
+    
+        # Process image if uploaded
+        image_url = None
+        thumbnail_url = None
+        if file and file.filename:
+            image_url, thumbnail_url = await process_and_store_image(file)
+    
+        found_item = FoundItem(
+            report_id=report_id,
+            access_token=access_token,
+            title=title,
+            category=category,
+            brand=brand,
+            color=color,
+            location=location,
+            found_date=found_date,
+            description=description,
+            storage_location=storage_location,
+            image_url=image_url,
+            thumbnail_url=thumbnail_url,
+            contact_email=contact_email,
+            contact_phone=contact_phone,
+            status=ItemStatus.REPORTED
+        )
+        db.add(found_item)
+        await db.flush()
 
     # If explicitly linked to a lost item via "I Found This Item" button
     if lost_item_id:
@@ -169,6 +176,15 @@ async def create_found_item(
     
     await db.commit()
     await db.refresh(found_item)
+    
+    # Send confirmation email
+    send_report_confirmation_email(
+        email=found_item.contact_email,
+        report_id=found_item.report_id,
+        access_token=found_item.access_token,
+        item_title=found_item.title
+    )
+    
     return found_item
 
 @router.get("/all", response_model=List[FoundItemOut])

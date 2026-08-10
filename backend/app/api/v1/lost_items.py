@@ -103,14 +103,6 @@ async def create_lost_item(
     db.add(lost_item)
     await db.flush()
 
-    # Confirmation notification email
-    send_report_confirmation_email(
-        email=lost_item.contact_email,
-        report_id=lost_item.report_id,
-        access_token=lost_item.access_token,
-        item_title=lost_item.title
-    )
-
     # Trigger automatic matching engine against existing found items
     found_result = await db.execute(select(FoundItem).where(FoundItem.status == ItemStatus.REPORTED))
     found_items = found_result.scalars().all()
@@ -151,6 +143,15 @@ async def create_lost_item(
     
     await db.commit()
     await db.refresh(lost_item)
+    
+    # Confirmation notification email
+    send_report_confirmation_email(
+        email=lost_item.contact_email,
+        report_id=lost_item.report_id,
+        access_token=lost_item.access_token,
+        item_title=lost_item.title
+    )
+    
     return lost_item
 
 @router.get("/all", response_model=List[LostItemOut])

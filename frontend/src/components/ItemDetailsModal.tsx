@@ -180,7 +180,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
                 setIsSubmitting(true);
                 setSubmitError('');
                 try {
-                  await api.post(`/api/v1/lost_items/${item.report_id}/information`, {
+                  await api.post(`/lost/${item.report_id}/information`, {
                     message: infoMessage,
                     sender_name: infoName || undefined,
                     sender_email: infoEmail || undefined

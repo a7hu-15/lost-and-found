@@ -67,7 +67,7 @@ async def process_and_store_image(file: UploadFile):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
 
-    base_url = f"http://localhost:8000/static/uploads/{now.year}/{now.month:02d}"
+    base_url = f"/static/uploads/{now.year}/{now.month:02d}"
     main_url = f"{base_url}/{main_filename}"
     thumb_url = f"{base_url}/{thumb_filename}"
 

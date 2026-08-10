@@ -79,6 +79,7 @@ export const ReportLost: React.FC = () => {
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
 
     const calculatedTitle = (title || `${color} ${brand} ${category}`).trim();
@@ -132,16 +133,22 @@ export const ReportLost: React.FC = () => {
       }
       if (uploadedFile) formData.append('file', uploadedFile);
 
-      const res = await api.post('/lost/create', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.post('/lost/create', formData);
 
       setCreatedItem({
         report_id: res.data.report_id,
         access_token: res.data.access_token
       });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to submit report. Please try again.');
+      let errorMessage = 'Failed to submit report. Please try again.';
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map((e: any) => `${e.loc.join('.')} ${e.msg}`).join(', ');
+        } else if (typeof err.response.data.detail === 'string') {
+          errorMessage = err.response.data.detail;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
