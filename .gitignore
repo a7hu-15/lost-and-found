@@ -32,3 +32,20 @@ __pycache__/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Python virtual environment (root level)
+.venv/
+
+# Database backups (contain live data)
+backups/
+
+# Uploaded user files (Docker volume — ephemeral)
+uploads/
+
+# SSL Certificates & Private Keys (NEVER commit)
+infra/nginx/ssl/*.pem
+infra/nginx/ssl/*.key
+infra/nginx/ssl/*.crt
+
+# Example environment file (safe to commit, but no secrets inside)
+# .env.production.example is intentionally kept for documentation

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     MATCH_THRESHOLD: float = 80.0
     
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-change-this-in-production-32bytes-min!")
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
@@ -30,6 +30,14 @@ class Settings(BaseSettings):
         "http://localhost:8080",
         "http://127.0.0.1:5173",
     ]
+    
+    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
     
     # Storage
     STORAGE_TYPE: str = os.getenv("STORAGE_TYPE", "local")  # local or s3

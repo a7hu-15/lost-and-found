@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Search, Eye, EyeOff, CheckCircle2, ShieldAlert, X } from 'lucide-react';
+import { FileText, Search, Eye, EyeOff, CheckCircle2, ShieldAlert, X, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
 import api from '../../services/api';
 import { LostItem, ItemStatus } from '../../types';
+
+interface ItemInformation {
+  id: string;
+  lost_item_id: string;
+  message: string;
+  sender_name?: string;
+  sender_email?: string;
+  status: string;
+  created_at: string;
+}
 
 export const AdminLostItems: React.FC = () => {
   const [items, setItems] = useState<LostItem[]>([]);
@@ -15,6 +25,35 @@ export const AdminLostItems: React.FC = () => {
   const [moderationReason, setModerationReason] = useState('Inappropriate Content');
   const [adminNotes, setAdminNotes] = useState('');
   const [actionMessage, setActionMessage] = useState('');
+
+  // Information Tips state
+  const [tips, setTips] = useState<ItemInformation[]>([]);
+  const [tipsLoading, setTipsLoading] = useState(true);
+  const [tipActionMessage, setTipActionMessage] = useState('');
+
+  const fetchTips = async () => {
+    setTipsLoading(true);
+    try {
+      const res = await api.get('/admin/information?status=PENDING');
+      setTips(res.data);
+    } catch (err) {
+      console.error('Failed to fetch information tips', err);
+    } finally {
+      setTipsLoading(false);
+    }
+  };
+
+  const handleReviewTip = async (tipId: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      await api.patch(`/admin/information/${tipId}/status`, { status });
+      const msg = status === 'APPROVED' ? 'Information Tip Approved & Owner Notified' : 'Information Tip Rejected';
+      setTipActionMessage(msg);
+      fetchTips();
+      setTimeout(() => setTipActionMessage(''), 4000);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to review tip.');
+    }
+  };
 
   const fetchItems = async () => {
     setLoading(true);
@@ -30,6 +69,7 @@ export const AdminLostItems: React.FC = () => {
 
   useEffect(() => {
     fetchItems();
+    fetchTips();
   }, []);
 
   const openModerationModal = (item: LostItem, status: ItemStatus) => {
@@ -262,6 +302,74 @@ export const AdminLostItems: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Information Tips Review Queue */}
+      <div className="space-y-4 pt-6 border-t border-[var(--admin-border)]">
+        <div className="flex items-center gap-2 border-b border-[var(--admin-border)] pb-2">
+          <MessageSquare className="w-4 h-4 text-blue-400" />
+          <h2 className="text-base font-semibold text-[var(--admin-text-primary)] tracking-tight">
+            Information Tips Queue ({tips.length})
+          </h2>
+        </div>
+
+        {tipActionMessage && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs p-3 rounded font-mono flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>{tipActionMessage}</span>
+          </div>
+        )}
+
+        {tipsLoading ? (
+          <div className="admin-card p-8 text-center text-xs font-mono text-[var(--admin-text-muted)]">
+            Loading tips...
+          </div>
+        ) : tips.length === 0 ? (
+          <div className="admin-card p-6 text-center text-xs font-mono text-[var(--admin-text-muted)]">
+            No pending information tips.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {tips.map((t) => (
+              <div key={t.id} className="admin-card p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--admin-border)] pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono text-[var(--admin-text-muted)] uppercase">Lost Item Report ID:</span>
+                    <div className="text-sm font-semibold text-[var(--admin-text-primary)] font-mono">{t.lost_item_id}</div>
+                  </div>
+                  <span className="text-xs font-mono px-2.5 py-1 rounded border uppercase bg-amber-950/40 text-amber-300 border-amber-900/60">
+                    {t.status}
+                  </span>
+                </div>
+
+                <div className="bg-[var(--admin-surface-subtle)] p-4 rounded border border-[var(--admin-border)] text-xs space-y-2 font-mono">
+                  <div>
+                    <span className="text-[var(--admin-text-muted)] block text-[10px] uppercase">Submitted By:</span>
+                    <span className="text-[var(--admin-text-primary)]">{t.sender_name || 'Anonymous'} ({t.sender_email || 'No Email'})</span>
+                  </div>
+                  <div>
+                    <span className="text-[var(--admin-text-muted)] block text-[10px] uppercase">Message:</span>
+                    <p className="text-[var(--admin-text-secondary)] font-sans mt-1 whitespace-pre-wrap">{t.message}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => handleReviewTip(t.id, 'REJECTED')}
+                    className="admin-button-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 hover:text-rose-400"
+                  >
+                    <XCircle className="w-3.5 h-3.5" /> Reject Tip
+                  </button>
+                  <button
+                    onClick={() => handleReviewTip(t.id, 'APPROVED')}
+                    className="admin-button-primary text-xs py-1.5 px-4 flex items-center gap-1.5"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" /> Approve & Notify Owner
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
     </div>
   );

@@ -5,10 +5,10 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
       POSTGRES_DB: lost_and_found
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,8 +21,8 @@ services:
     image: redis:7-alpine
     container_name: cloudfind_redis
     restart: always
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -35,12 +35,19 @@ services:
       dockerfile: Dockerfile
     container_name: cloudfind_backend
     restart: always
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgrespassword@postgres:5432/lost_and_found
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=super-secret-production-jwt-key-32bytes-min!
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgrespassword@postgres:5432/lost_and_found}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY}
+      - MOCK_SMTP=${MOCK_SMTP:-True}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,8 +60,8 @@ services:
       dockerfile: Dockerfile
     container_name: cloudfind_frontend
     restart: always
-    ports:
-      - "5173:80"
+    expose:
+      - "80"
     depends_on:
       - backend
 
@@ -62,13 +69,20 @@ services:
     image: nginx:alpine
     container_name: cloudfind_nginx
     restart: always
+    expose:
+      - "80"
+      - "443"
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
 
   prometheus:
     image: prom/prometheus:latest
@@ -86,7 +100,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin}
     depends_on:
       - prometheus
 
