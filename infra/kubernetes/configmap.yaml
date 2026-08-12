@@ -2,8 +2,25 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cloudfind-config
-  namespace: default
+  namespace: cloudfind
 data:
+  # Application
   PROJECT_NAME: "Cloud Lost & Found Platform"
-  STORAGE_TYPE: "local"
-  UPLOAD_DIR: "uploads"
+  ENVIRONMENT: "production"
+
+  # Email (mock in K8s QA — set MOCK_SMTP=False and inject SMTP_PASSWORD for real email)
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  SMTP_TLS: "True"
+  SMTP_FROM: "cloudlostfound.admin@gmail.com"
+  SUPPORT_EMAIL: "cloudlostfound.admin@gmail.com"
+  MOCK_SMTP: "True"
+
+  # Object storage — MinIO (S3-compatible) inside cluster
+  STORAGE_TYPE: "s3"
+  S3_ENDPOINT: "http://cloudfind-minio:9000"
+  S3_BUCKET: "lost-found-uploads"
+  S3_REGION: "us-east-1"
+
+  # CORS — allow the ingress hostname and localhost for testing
+  ALLOWED_ORIGINS: "http://localhost,https://localhost,http://cloudfind.local,https://cloudfind.local"
