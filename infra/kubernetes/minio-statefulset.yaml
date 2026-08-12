@@ -1,0 +1,111 @@
+---
+# MinIO PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: cloudfind
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# MinIO StatefulSet (S3-compatible object storage)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cloudfind-minio
+  namespace: cloudfind
+  labels:
+    app: cloudfind-minio
+spec:
+  serviceName: cloudfind-minio
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudfind-minio
+  template:
+    metadata:
+      labels:
+        app: cloudfind-minio
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+          args: ["server", "/data", "--console-address", ":9001"]
+          ports:
+            - containerPort: 9000  # S3 API
+            - containerPort: 9001  # Web console
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudfind-secret
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudfind-secret
+                  key: MINIO_ROOT_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: minio-storage
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            timeoutSeconds: 5
+            failureThreshold: 12
+            periodSeconds: 5
+      volumes:
+        - name: minio-storage
+          persistentVolumeClaim:
+            claimName: minio-pvc
+---
+# MinIO S3 API Service (internal)
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudfind-minio
+  namespace: cloudfind
+  labels:
+    app: cloudfind-minio
+spec:
+  clusterIP: None
+  selector:
+    app: cloudfind-minio
+  ports:
+    - port: 9000
+      targetPort: 9000
+      name: s3-api
+    - port: 9001
+      targetPort: 9001
+      name: console

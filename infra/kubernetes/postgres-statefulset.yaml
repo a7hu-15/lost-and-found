@@ -1,0 +1,123 @@
+---
+# PostgreSQL PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: cloudfind
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cloudfind-postgres
+  namespace: cloudfind
+  labels:
+    app: cloudfind-postgres
+spec:
+  serviceName: cloudfind-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudfind-postgres
+  template:
+    metadata:
+      labels:
+        app: cloudfind-postgres
+    spec:
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: lost_and_found
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudfind-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - lost_and_found
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - lost_and_found
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          startupProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - lost_and_found
+            timeoutSeconds: 5
+            failureThreshold: 12
+            periodSeconds: 5
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+# PostgreSQL Headless Service (for StatefulSet DNS)
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudfind-postgres
+  namespace: cloudfind
+  labels:
+    app: cloudfind-postgres
+spec:
+  clusterIP: None
+  selector:
+    app: cloudfind-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
