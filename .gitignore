@@ -49,3 +49,6 @@ infra/nginx/ssl/*.crt
 
 # Example environment file (safe to commit, but no secrets inside)
 # .env.production.example is intentionally kept for documentation
+infra/kubernetes/tls-secret.yaml
+infra/kubernetes/secret.yaml
+test_report_id.txt

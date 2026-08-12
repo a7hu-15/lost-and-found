@@ -140,3 +140,33 @@ Public deployment requires a production server, domain, CA-signed TLS, and produ
 Document generated: 2026-08-11
 Git tag: v1.0.0
 Commit: 8cb911e
+
+---
+
+## Phase 11 — Kubernetes & DevOps Verification Summary
+
+**Target Cluster:** minikube (Kubernetes v1.38)  
+**Namespace:** `cloudfind`
+
+### Kubernetes Workload Status — ALL PASSING
+
+```text
+NAME                                  READY   STATUS    RESTARTS   AGE
+pod/cloudfind-backend-7b68c8f84-5gggm 1/1     Running   0          5m
+pod/cloudfind-backend-7b68c8f84-m4rkk 1/1     Running   1          8m
+pod/cloudfind-frontend-5bd4d6bd45-5wxzq 1/1   Running   0          3m
+pod/cloudfind-frontend-5bd4d6bd45-jwzds 1/1   Running   0          3m
+pod/cloudfind-minio-0                 1/1     Running   0          4m
+pod/cloudfind-postgres-0              1/1     Running   0          25h
+pod/cloudfind-redis-0                 1/1     Running   0          25h
+pod/prometheus-7458d797ff-ftn65       1/1     Running   0          3m
+```
+
+### Verified Kubernetes Capabilities
+
+1. **StatefulSet & PVC Storage**: PostgreSQL (5Gi), Redis (1Gi), and MinIO (10Gi) running with `ReadWriteOnce` persistent volume claims bound to minikube `standard` StorageClass.
+2. **S3-Compatible Object Storage**: Verified `S3Storage` Python abstraction sending image uploads to in-cluster MinIO instance at `http://cloudfind-minio:9000/lost-found-uploads/`.
+3. **Self-Healing Pod Recovery**: Deleted `cloudfind-backend` pod; Kubernetes automatically created replacement pod `cloudfind-backend-7b68c8f84-5gggm` in 4 seconds.
+4. **Horizontal Pod Autoscaler (HPA)**: Backend deployment configured with `cloudfind-backend-hpa` (min 2, max 10 replicas) receiving live CPU/Memory utilization from `metrics-server`.
+5. **Nginx Ingress Routing & Security**: TLS termination with self-signed certificate, rate limiting (20 rps), CORS allow origins, and 10MB upload body limit configured via `cloudfind-ingress`.
+6. **Production CI/CD Pipeline**: GitHub Actions workflow `.github/workflows/ci-cd.yml` configured for Bandit static analysis, npm vulnerability audit, pytest execution, GHCR container image publishing, and Trivy security scanning.
