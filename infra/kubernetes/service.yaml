@@ -1,27 +1,51 @@
+---
+# Backend ClusterIP Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: cloudfind-backend-service
-  namespace: default
+  name: cloudfind-backend
+  namespace: cloudfind
+  labels:
+    app: cloudfind-backend
 spec:
   type: ClusterIP
   selector:
     app: cloudfind-backend
   ports:
-  - port: 8000
-    targetPort: 8000
-    name: http
+    - port: 8000
+      targetPort: 8000
+      name: http
 ---
+# Service Alias 'backend' for internal container compatibility
 apiVersion: v1
 kind: Service
 metadata:
-  name: cloudfind-frontend-service
-  namespace: default
+  name: backend
+  namespace: cloudfind
+  labels:
+    app: cloudfind-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: cloudfind-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+---
+# Frontend ClusterIP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudfind-frontend
+  namespace: cloudfind
+  labels:
+    app: cloudfind-frontend
 spec:
   type: ClusterIP
   selector:
     app: cloudfind-frontend
   ports:
-  - port: 80
-    targetPort: 80
-    name: http
+    - port: 80
+      targetPort: 8080
+      name: http
