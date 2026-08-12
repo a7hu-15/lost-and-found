@@ -39,13 +39,16 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
     
-    # Storage
-    STORAGE_TYPE: str = os.getenv("STORAGE_TYPE", "local")  # local or s3
-    UPLOAD_DIR: str = "uploads"
-    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
-    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
-    AWS_S3_BUCKET: str = os.getenv("AWS_S3_BUCKET", "cloudfind-assets")
-    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    # Storage — "local" for Docker Compose, "s3" for Kubernetes (MinIO)
+    STORAGE_TYPE: str = os.getenv("STORAGE_TYPE", "local")
+    UPLOAD_DIR: str = "uploads"  # used when STORAGE_TYPE=local
+
+    # S3 / MinIO settings (used when STORAGE_TYPE=s3)
+    S3_ENDPOINT: str = os.getenv("S3_ENDPOINT", "")
+    S3_BUCKET: str = os.getenv("S3_BUCKET", "lost-found-uploads")
+    S3_REGION: str = os.getenv("S3_REGION", "us-east-1")
+    S3_ACCESS_KEY: str = os.getenv("S3_ACCESS_KEY", "")
+    S3_SECRET_KEY: str = os.getenv("S3_SECRET_KEY", "")
 
     # SMTP Email Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
