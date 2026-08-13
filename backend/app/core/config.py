@@ -39,16 +39,16 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
     
-    # Storage — "local" for Docker Compose, "s3" for Kubernetes (MinIO)
-    STORAGE_TYPE: str = os.getenv("STORAGE_TYPE", "local")
-    UPLOAD_DIR: str = "uploads"  # used when STORAGE_TYPE=local
+    # Storage
+    USE_CLOUD_STORAGE: bool = os.getenv("USE_CLOUD_STORAGE", "False").lower() == "true"
+    UPLOAD_DIR: str = "uploads"  # used when USE_CLOUD_STORAGE=False
 
-    # S3 / MinIO settings (used when STORAGE_TYPE=s3)
-    S3_ENDPOINT: str = os.getenv("S3_ENDPOINT", "")
-    S3_BUCKET: str = os.getenv("S3_BUCKET", "lost-found-uploads")
-    S3_REGION: str = os.getenv("S3_REGION", "us-east-1")
-    S3_ACCESS_KEY: str = os.getenv("S3_ACCESS_KEY", "")
-    S3_SECRET_KEY: str = os.getenv("S3_SECRET_KEY", "")
+    # Generic Cloud Storage (e.g. S3, Cloudinary)
+    CLOUD_STORAGE_ENDPOINT: str = os.getenv("CLOUD_STORAGE_ENDPOINT", "")
+    CLOUD_STORAGE_BUCKET: str = os.getenv("CLOUD_STORAGE_BUCKET", "lost-found-uploads")
+    CLOUD_STORAGE_REGION: str = os.getenv("CLOUD_STORAGE_REGION", "us-east-1")
+    CLOUD_STORAGE_ACCESS_KEY: str = os.getenv("CLOUD_STORAGE_ACCESS_KEY", "")
+    CLOUD_STORAGE_SECRET_KEY: str = os.getenv("CLOUD_STORAGE_SECRET_KEY", "")
 
     # SMTP Email Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
