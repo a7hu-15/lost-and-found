@@ -1,5 +1,6 @@
 import os
 import aiofiles
+import httpx
 from abc import ABC, abstractmethod
 from app.core.config import settings
 
@@ -22,17 +23,38 @@ class LocalStorage(StorageBackend):
             await f.write(data)
         return f"{self.base_url}/{filepath}"
 
-class CloudStorage(StorageBackend):
+class SupabaseStorage(StorageBackend):
     """
-    Placeholder for Hosted Object Storage (e.g. S3, Cloudinary).
-    Will be fully implemented when a provider is selected.
+    Supabase Storage implementation using httpx for async uploads.
     """
+    def __init__(self):
+        self.url = settings.SUPABASE_URL
+        self.key = settings.SUPABASE_KEY
+        self.bucket = settings.SUPABASE_BUCKET
+
     async def save(self, filepath: str, data: bytes) -> str:
-        # Implementation depends on the provider (boto3, cloudinary SDK, etc)
-        # For now, falls back to local or raises NotImplementedError
-        raise NotImplementedError("CloudStorage provider not configured yet")
+        if not self.url or not self.key:
+            raise ValueError("Supabase credentials not configured")
+            
+        endpoint = f"{self.url.rstrip('/')}/storage/v1/object/{self.bucket}/{filepath}"
+        headers = {
+            "Authorization": f"Bearer {self.key}",
+            "apikey": self.key,
+            "Content-Type": "image/jpeg"
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(endpoint, content=data, headers=headers)
+            
+            # If 400 or 409 (already exists), try PUT instead
+            if response.status_code in (400, 409):
+                response = await client.put(endpoint, content=data, headers=headers)
+                
+            response.raise_for_status()
+            
+        return f"{self.url.rstrip('/')}/storage/v1/object/public/{self.bucket}/{filepath}"
 
 def get_storage_backend() -> StorageBackend:
     if getattr(settings, "USE_CLOUD_STORAGE", False):
-        return CloudStorage()
+        return SupabaseStorage()
     return LocalStorage()
