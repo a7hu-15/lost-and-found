@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: cloudfind
-  labels:
-    app.kubernetes.io/name: cloud-lost-and-found
-    app.kubernetes.io/managed-by: kubectl
