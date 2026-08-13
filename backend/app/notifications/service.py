@@ -1,8 +1,9 @@
 import logging
-import smtplib
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import inspect
+import httpx
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -31,32 +32,40 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
     logger.info(f"BODY:\n{body_text}")
     logger.info(f"=====================================")
 
-    if not settings.SMTP_HOST or not settings.SMTP_USER:
-        return
-
     if settings.MOCK_SMTP:
         logger.info(f"MOCK SMTP ENABLED: Bypassed physical email dispatch to {to_email}")
         return
 
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = settings.SMTP_FROM
-        msg["To"] = to_email
+    if settings.RESEND_API_KEY:
+        try:
+            payload = {
+                "from": settings.SMTP_FROM,
+                "to": to_email,
+                "subject": subject,
+                "text": body_text
+            }
+            if body_html:
+                payload["html"] = body_html
 
-        msg.attach(MIMEText(body_text, "plain"))
-        if body_html:
-            msg.attach(MIMEText(body_html, "html"))
+            headers = {
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            response = httpx.post(
+                "https://api.resend.com/emails", 
+                json=payload, 
+                headers=headers,
+                timeout=10.0
+            )
+            response.raise_for_status()
+            logger.info(f"Email sent successfully via Resend to {to_email}")
+            return
+        except Exception as e:
+            logger.error(f"Failed to send email via Resend to {to_email}: {str(e)}")
+            return
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            if settings.SMTP_TLS:
-                server.starttls()
-            if settings.SMTP_USER and settings.SMTP_PASSWORD:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.sendmail(settings.SMTP_FROM, [to_email], msg.as_string())
-        logger.info(f"Email sent successfully to {to_email}")
-    except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {str(e)}")
+    return
 
 
 def send_report_confirmation_email(email: str, report_id: str, access_token: str, item_title: str):
