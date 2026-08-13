@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime
+import io
 from PIL import Image, ImageOps
 from fastapi import UploadFile, HTTPException
 
@@ -64,18 +65,26 @@ async def process_and_store_image(file: UploadFile):
         # 1. Main image: Max 1200px
         main_img = img.copy()
         main_img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
-        main_img.save(main_path, "WEBP", quality=82, optimize=True)
+        
+        main_buffer = io.BytesIO()
+        main_img.save(main_buffer, "WEBP", quality=82, optimize=True)
+        main_bytes = main_buffer.getvalue()
 
         # 2. Thumbnail: Max 300px
         thumb_img = img.copy()
         thumb_img.thumbnail((300, 300), Image.Resampling.LANCZOS)
-        thumb_img.save(thumb_path, "WEBP", quality=75, optimize=True)
+        
+        thumb_buffer = io.BytesIO()
+        thumb_img.save(thumb_buffer, "WEBP", quality=75, optimize=True)
+        thumb_bytes = thumb_buffer.getvalue()
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
 
-    base_url = f"/static/uploads/{now.year}/{now.month:02d}"
-    main_url = f"{base_url}/{main_filename}"
-    thumb_url = f"{base_url}/{thumb_filename}"
+    from app.services.storage import get_storage_backend
+    storage = get_storage_backend()
+
+    main_url = await storage.save(f"{now.year}/{now.month:02d}/{main_filename}", main_bytes)
+    thumb_url = await storage.save(f"{now.year}/{now.month:02d}/{thumb_filename}", thumb_bytes)
 
     return main_url, thumb_url
