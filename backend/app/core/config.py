@@ -43,21 +43,15 @@ class Settings(BaseSettings):
     USE_CLOUD_STORAGE: bool = os.getenv("USE_CLOUD_STORAGE", "False").lower() == "true"
     UPLOAD_DIR: str = "uploads"  # used when USE_CLOUD_STORAGE=False
 
-    # Generic Cloud Storage (e.g. S3, Cloudinary)
-    CLOUD_STORAGE_ENDPOINT: str = os.getenv("CLOUD_STORAGE_ENDPOINT", "")
-    CLOUD_STORAGE_BUCKET: str = os.getenv("CLOUD_STORAGE_BUCKET", "lost-found-uploads")
-    CLOUD_STORAGE_REGION: str = os.getenv("CLOUD_STORAGE_REGION", "us-east-1")
-    CLOUD_STORAGE_ACCESS_KEY: str = os.getenv("CLOUD_STORAGE_ACCESS_KEY", "")
-    CLOUD_STORAGE_SECRET_KEY: str = os.getenv("CLOUD_STORAGE_SECRET_KEY", "")
+    # Supabase Storage Configuration (Replaces generic cloud storage for this project)
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+    SUPABASE_BUCKET: str = os.getenv("SUPABASE_BUCKET", "lost-found-images")
 
-    # SMTP Email Configuration
+    # SMTP / Resend Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
-    SMTP_HOST: str = ""
-    SMTP_PORT: int = 587
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
-    SMTP_TLS: bool = True
-    SMTP_FROM: str = "cloudlostfound.platform@gmail.com"
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    SMTP_FROM: str = "Cloud Lost & Found <onboarding@resend.dev>" # Default Resend dev email
     MOCK_SMTP: bool = False
 
     class Config:
