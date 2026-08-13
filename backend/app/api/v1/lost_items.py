@@ -20,11 +20,11 @@ from app.services.image_service import process_and_store_image
 import re
 from datetime import date as date_cls
 
-from app.core.rate_limit import limiter
+from app.core.rate_limit import limiter, LIMIT_CREATE
 router = APIRouter()
 
 @router.post("/create", response_model=LostItemOut, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def create_lost_item(
     request: Request,
     title: str = Form(...),
@@ -199,7 +199,7 @@ from app.schemas.item_information import ItemInformationCreate, ItemInformationO
 from app.notifications.service import send_information_submitted_platform_email
 
 @router.post("/{report_id}/information", response_model=ItemInformationOut, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def submit_item_information(
     report_id: str,
     payload: ItemInformationCreate,

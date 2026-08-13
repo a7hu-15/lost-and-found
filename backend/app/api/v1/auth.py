@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import Request
 
-from app.core.rate_limit import limiter
+from app.core.rate_limit import limiter, LIMIT_LOGIN, LIMIT_CREATE, LIMIT_SENSITIVE
 from app.database.session import get_db
 from app.models.user import User, UserRole, DEFAULT_PERMISSIONS
 from app.models.staff_invitation import StaffInvitation
@@ -26,7 +26,7 @@ from app.notifications.service import send_password_reset_email
 router = APIRouter()
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def register(request: Request, user_in: UserRegister, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == user_in.email))
     existing_user = result.scalar_one_or_none()
@@ -63,7 +63,7 @@ async def register(request: Request, user_in: UserRegister, db: AsyncSession = D
     return user
 
 @router.post("/login", response_model=Token)
-@limiter.limit("10/minute")
+@limiter.limit(LIMIT_LOGIN)
 async def login(request: Request, login_in: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == login_in.email))
     user = result.scalar_one_or_none()
@@ -111,7 +111,7 @@ async def login(request: Request, login_in: UserLogin, db: AsyncSession = Depend
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/login/mfa", response_model=Token)
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def login_mfa(request: Request, mfa_in: MFALoginRequest, db: AsyncSession = Depends(get_db)):
     payload = decode_token(mfa_in.mfa_token)
     if not payload or not payload.get("sub"):
@@ -144,7 +144,7 @@ async def login_mfa(request: Request, mfa_in: MFALoginRequest, db: AsyncSession 
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/forgot-password")
-@limiter.limit("3/minute")
+@limiter.limit(LIMIT_SENSITIVE)
 async def forgot_password(request: Request, req: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == req.email.lower().strip()))
     user = result.scalar_one_or_none()
@@ -176,7 +176,7 @@ async def forgot_password(request: Request, req: ForgotPasswordRequest, db: Asyn
     }
 
 @router.post("/reset-password")
-@limiter.limit("3/minute")
+@limiter.limit(LIMIT_SENSITIVE)
 async def reset_password(request: Request, req: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(PasswordResetToken).where(PasswordResetToken.token == req.token))
     reset_entry = result.scalar_one_or_none()
@@ -266,7 +266,7 @@ async def change_password(
     return {"message": "Password successfully updated."}
 
 @router.post("/mfa/setup", response_model=MFASetupResponse)
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def setup_mfa(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
@@ -278,7 +278,7 @@ async def setup_mfa(request: Request, current_user: User = Depends(get_current_u
     return MFASetupResponse(secret=secret, qr_uri=qr_uri)
 
 @router.post("/mfa/enable")
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def enable_mfa(
     request: Request,
     req: MFAEnableRequest,
@@ -310,7 +310,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 @router.post("/refresh", response_model=Token)
-@limiter.limit("10/minute")
+@limiter.limit(LIMIT_LOGIN)
 async def refresh_token(request: Request, refresh_token: str, db: AsyncSession = Depends(get_db)):
     payload = decode_token(refresh_token)
     if not payload or payload.get("type") != "refresh" or not payload.get("sub"):

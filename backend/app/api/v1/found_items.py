@@ -20,13 +20,13 @@ import re
 import asyncio
 _creation_lock = asyncio.Lock()
 
-from app.core.rate_limit import limiter
+from app.core.rate_limit import limiter, LIMIT_CREATE
 from fastapi import Request
 
 router = APIRouter()
 
 @router.post("/create", response_model=FoundItemOut, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit(LIMIT_CREATE)
 async def create_found_item(
     request: Request,
     title: str = Form(...),
