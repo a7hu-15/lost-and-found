@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from fastapi import Request
 
+from app.core.rate_limit import limiter
 from app.database.session import get_db
 from app.models.user import User, UserRole, DEFAULT_PERMISSIONS
 from app.models.staff_invitation import StaffInvitation
@@ -24,7 +26,8 @@ from app.notifications.service import send_password_reset_email
 router = APIRouter()
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-async def register(user_in: UserRegister, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user_in: UserRegister, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == user_in.email))
     existing_user = result.scalar_one_or_none()
     if existing_user:
@@ -60,7 +63,8 @@ async def register(user_in: UserRegister, db: AsyncSession = Depends(get_db)):
     return user
 
 @router.post("/login", response_model=Token)
-async def login(login_in: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, login_in: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == login_in.email))
     user = result.scalar_one_or_none()
     
@@ -107,7 +111,8 @@ async def login(login_in: UserLogin, db: AsyncSession = Depends(get_db)):
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/login/mfa", response_model=Token)
-async def login_mfa(mfa_in: MFALoginRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login_mfa(request: Request, mfa_in: MFALoginRequest, db: AsyncSession = Depends(get_db)):
     payload = decode_token(mfa_in.mfa_token)
     if not payload or not payload.get("sub"):
         raise HTTPException(status_code=401, detail="Invalid or expired MFA session challenge.")
@@ -139,7 +144,8 @@ async def login_mfa(mfa_in: MFALoginRequest, db: AsyncSession = Depends(get_db))
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/forgot-password")
-async def forgot_password(req: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, req: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == req.email.lower().strip()))
     user = result.scalar_one_or_none()
 
@@ -170,7 +176,8 @@ async def forgot_password(req: ForgotPasswordRequest, db: AsyncSession = Depends
     }
 
 @router.post("/reset-password")
-async def reset_password(req: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/minute")
+async def reset_password(request: Request, req: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(PasswordResetToken).where(PasswordResetToken.token == req.token))
     reset_entry = result.scalar_one_or_none()
 
@@ -259,7 +266,8 @@ async def change_password(
     return {"message": "Password successfully updated."}
 
 @router.post("/mfa/setup", response_model=MFASetupResponse)
-async def setup_mfa(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def setup_mfa(request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
     qr_uri = totp.provisioning_uri(name=current_user.email, issuer_name="Campus Lost & Found")
@@ -270,7 +278,9 @@ async def setup_mfa(current_user: User = Depends(get_current_user), db: AsyncSes
     return MFASetupResponse(secret=secret, qr_uri=qr_uri)
 
 @router.post("/mfa/enable")
+@limiter.limit("5/minute")
 async def enable_mfa(
+    request: Request,
     req: MFAEnableRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -298,3 +308,29 @@ async def enable_mfa(
 @router.get("/me", response_model=UserOut)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/refresh", response_model=Token)
+@limiter.limit("10/minute")
+async def refresh_token(request: Request, refresh_token: str, db: AsyncSession = Depends(get_db)):
+    payload = decode_token(refresh_token)
+    if not payload or payload.get("type") != "refresh" or not payload.get("sub"):
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token.")
+    
+    user_id = payload.get("sub")
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User account is inactive or deleted.")
+    
+    role_str = user.role.value if hasattr(user.role, 'value') else str(user.role)
+    new_access_token = create_access_token(subject=user.id, role=role_str)
+    # Return the same refresh token unless we want rotating refresh tokens
+    return Token(access_token=new_access_token, refresh_token=refresh_token)
+
+@router.post("/logout")
+async def logout(current_user: User = Depends(get_current_user)):
+    # Since JWTs are stateless, the actual invalidation happens on the client side
+    # by deleting the token. For stateful invalidation, a Redis blacklist would be used here.
+    return {"message": "Successfully logged out. Please discard your token locally."}
+

@@ -12,6 +12,13 @@ async def process_and_store_image(file: UploadFile):
     if not file:
         return None, None
 
+    ALLOWED_MIMES = {"image/jpeg", "image/png", "image/webp"}
+    if file.content_type not in ALLOWED_MIMES:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid MIME type. Only JPEG, PNG, and WebP are allowed."
+        )
+
     # Check extension
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:

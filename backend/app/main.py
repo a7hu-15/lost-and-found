@@ -13,7 +13,7 @@ from app.database.session import engine
 from app.database.base import Base
 import app.models  # Ensure models are registered with Base
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+from app.core.rate_limit import limiter
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,6 +22,19 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+from fastapi.responses import JSONResponse
+import logging
+
+logger = logging.getLogger(__name__)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please contact support if the issue persists."}
+    )
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

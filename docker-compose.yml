@@ -43,6 +43,8 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - MOCK_SMTP=${MOCK_SMTP:-True}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
+    volumes:
+      - ./backend/app:/app/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s

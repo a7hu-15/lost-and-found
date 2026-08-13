@@ -1,5 +1,6 @@
-import json
 from typing import List, Optional
+import html
+from fastapi import Request
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,10 +20,13 @@ from app.services.image_service import process_and_store_image
 import re
 from datetime import date as date_cls
 
+from app.core.rate_limit import limiter
 router = APIRouter()
 
 @router.post("/create", response_model=LostItemOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def create_lost_item(
+    request: Request,
     title: str = Form(...),
     category: str = Form(...),
     location: str = Form(...),
@@ -82,6 +86,14 @@ async def create_lost_item(
     thumbnail_url = None
     if file and file.filename:
         image_url, thumbnail_url = await process_and_store_image(file)
+
+    # XSS Sanitization
+    title = html.escape(title.strip())
+    location = html.escape(location.strip())
+    description = html.escape(description.strip())
+    category = html.escape(category.strip())
+    brand = html.escape(brand.strip()) if brand else None
+    color = html.escape(color.strip()) if color else None
 
     lost_item = LostItem(
         report_id=report_id,
@@ -182,17 +194,12 @@ async def get_lost_item(item_id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Lost item not found")
     return item
 
-from fastapi import Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from app.models.item_information import LostItemInformation
 from app.schemas.item_information import ItemInformationCreate, ItemInformationOut
 from app.notifications.service import send_information_submitted_platform_email
 
-route_limiter = Limiter(key_func=get_remote_address)
-
 @router.post("/{report_id}/information", response_model=ItemInformationOut, status_code=status.HTTP_201_CREATED)
-@route_limiter.limit("5/minute")
+@limiter.limit("5/minute")
 async def submit_item_information(
     report_id: str,
     payload: ItemInformationCreate,
@@ -208,9 +215,9 @@ async def submit_item_information(
     # Save to database
     info = LostItemInformation(
         lost_item_id=lost_item.id,
-        sender_name=payload.sender_name,
+        sender_name=html.escape(payload.sender_name) if payload.sender_name else None,
         sender_email=payload.sender_email,
-        message=payload.message
+        message=html.escape(payload.message)
     )
     db.add(info)
     await db.commit()

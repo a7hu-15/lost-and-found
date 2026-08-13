@@ -1,4 +1,5 @@
 from typing import List, Optional
+import html
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,10 +20,15 @@ import re
 import asyncio
 _creation_lock = asyncio.Lock()
 
+from app.core.rate_limit import limiter
+from fastapi import Request
+
 router = APIRouter()
 
 @router.post("/create", response_model=FoundItemOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def create_found_item(
+    request: Request,
     title: str = Form(...),
     category: str = Form(...),
     location: str = Form(...),
@@ -100,6 +106,15 @@ async def create_found_item(
         if file and file.filename:
             image_url, thumbnail_url = await process_and_store_image(file)
     
+        # XSS Sanitization
+        title = html.escape(title.strip())
+        location = html.escape(location.strip())
+        description = html.escape(description.strip())
+        category = html.escape(category.strip())
+        storage_location = html.escape(storage_location.strip()) if storage_location else None
+        brand = html.escape(brand.strip()) if brand else None
+        color = html.escape(color.strip()) if color else None
+
         found_item = FoundItem(
             report_id=report_id,
             access_token=access_token,
