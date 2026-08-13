@@ -1,6 +1,6 @@
-# 🔍 Lost & Found — Campus Item Recovery Platform
+# 🔍 Cloud Lost & Found — Campus Item Recovery Platform
 
-> A production-grade, secure, cloud-native campus item recovery platform built with FastAPI, React, PostgreSQL/SQLite, TailwindCSS, Docker, and Kubernetes.
+> A production-grade, secure, cloud-native campus item recovery platform built with FastAPI, React, PostgreSQL/SQLite, and TailwindCSS.
 
 ---
 
@@ -22,14 +22,23 @@
 
 ```mermaid
 graph TD
-    A[Campus Visitor / Student] -->|HTTP / REST| B[React Frontend SPA]
-    B -->|JSON API / Multipart Form| C[FastAPI Async Backend Router]
-    C -->|Pillow WebP / EXIF Stripper| D[Image Processing Service]
-    D -->|Static Assets| E[Uploads Directory / Cloudflare R2]
-    C -->|SQLAlchemy 2.0 Async| F[SQLite / PostgreSQL Database]
-    C -->|Vector Score Engine| G[Deterministic Matching Engine]
-    C -->|SMTP Worker| H[Email Notification Receipt Service]
+    A[User] -->|HTTPS| B[Vercel React Frontend]
+    B -->|HTTPS API| C[FastAPI Serverless Backend]
+    C -->|SQLAlchemy| D[Managed PostgreSQL Database]
+    C -->|Storage API| E[Hosted Cloud Object Storage]
 ```
+
+---
+
+## 🛡️ Security & Privacy Features
+- **JWT & Role-Based Access Control (RBAC)**: Admin routes (`/admin`) require Security Staff credentials.
+- **Rate Limiting**: Protects sensitive endpoints (`/login`, `/register`, report creation) from brute-force and abuse.
+- **Input Validation & XSS Protection**: Strict Pydantic models and backend HTML escaping on all user-controlled text.
+- **SQL Injection Protection**: Built securely with SQLAlchemy 2.0 parameterized queries.
+- **File Upload Validation**: Enforces MIME types (JPEG, PNG, WebP), checks file sizes, strips EXIF metadata, and generates secure UUID filenames.
+- **Safe Error Handling**: Prevents leakage of internal stack traces, database schemas, and credentials to the client.
+- **CORS & Security Headers**: Strictly limited to production domains with comprehensive security policies.
+- **Password Hashing**: Secure bcrypt/argon2 hashing for all staff accounts.
 
 ---
 
@@ -88,35 +97,6 @@ erDiagram
 
 ---
 
-## 🔄 End-to-End Recovery Sequence
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Visitor
-    participant Frontend as React SPA
-    participant Backend as FastAPI Server
-    participant DB as Database
-    actor Admin as Security Staff
-
-    Visitor->>Frontend: Report Lost/Found Item
-    Frontend->>Backend: POST /api/v1/lost/create (Form + Photo)
-    Backend->>Backend: Strip EXIF, Compress WebP Thumbnail
-    Backend->>DB: Save Record & Generate Report ID (LF-SRM-26-8K4P91)
-    Backend-->>Visitor: Return Report ID & Access Token
-    Backend->>Backend: Trigger Matching Engine & Send Email Receipt
-    Visitor->>Frontend: View Found Item & Click "This is Mine"
-    Visitor->>Frontend: Submit Ownership Answers (Inside contents)
-    Frontend->>Backend: POST /api/v1/claims/submit
-    Backend->>DB: Set Status CLAIMED & Notify Admin Queue
-    Admin->>Frontend: Open /admin Control Center & Review Answers
-    Admin->>Backend: POST /api/v1/claims/{id}/review (APPROVED)
-    Backend->>DB: Set Status RETURNED
-    Backend-->>Visitor: Dispatch Pickup Email (Collect at Gate 1 with Student ID)
-```
-
----
-
 ## 📂 Repository Directory Structure
 
 ```text
@@ -134,23 +114,51 @@ lost-and-found/
 │   │   ├── notifications/           # Email Dispatch Service
 │   │   ├── schemas/                 # Pydantic Data Validation Schemas
 │   │   ├── security/                # Auth Dependencies & JWT Handling
-│   │   └── services/                # Image Processing & EXIF Stripper
+│   │   └── services/                # Image Processing & Storage Abstraction
 │   ├── tests/                       # Unit & Integration API Tests
-│   ├── Dockerfile                   # Python 3.9 Backend Docker Spec
 │   └── requirements.txt             # Python Dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── components/              # React Components (ItemCard, ItemDetailsModal, Navbar, Footer)
-│   │   ├── pages/                   # Pages (Home, Search, TrackReport, RecoverReport, Claims, Admin)
+│   │   ├── components/              # React Components
+│   │   ├── pages/                   # Pages (Home, Search, TrackReport, Claims, Admin)
 │   │   ├── services/                # Axios API Service Client
 │   │   └── styles/                  # Global Tailwind CSS Styles
-│   ├── Dockerfile                   # Multi-stage Nginx Vite Frontend Docker Spec
 │   └── package.json                 # Node Dependencies
-├── docs/                            # IEEE Enterprise Software Specs (SRS, SDD, DevOps, Security)
-├── infra/                           # Docker Compose, Kubernetes Manifests, Nginx, Prometheus
-├── docker-compose.yml               # Complete Multi-Container Orchestration
-├── README.md                        # Primary Documentation
-└── .gitignore
+├── docs/                            # IEEE Enterprise Software Specs (SRS, SDD, Security)
+├── scripts/                         # Testing Scripts
+└── README.md                        # Primary Documentation
+```
+
+---
+
+## ⚙️ DevOps Architecture Archive
+
+The project previously included a complete Docker/Kubernetes-based deployment architecture including Kubernetes StatefulSets, persistent volumes, HPA, Ingress, NetworkPolicies, MinIO, Prometheus, and Grafana.
+
+This implementation has been preserved in the `devops-archive` branch for educational and engineering reference. The `main` branch now contains the simplified, zero-cost deployable Serverless architecture.
+
+---
+
+## 🧪 Testing & Verification
+
+Automated pipelines verify backend logic and security validations.
+
+Run automated backend pytest suite:
+```bash
+cd backend
+python -m pytest tests/ -v
+```
+
+Security Regression testing:
+```bash
+python scripts/security_regression.py
+```
+
+Test production frontend build:
+```bash
+cd frontend
+npm ci
+npm run build
 ```
 
 ---
@@ -163,11 +171,11 @@ lost-and-found/
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 
 # Run FastAPI server on port 8000
-python3 -m uvicorn app.main:app --port 8000 --reload
+uvicorn app.main:app --port 8000 --reload
 ```
 API Documentation will be active at: `http://localhost:8000/docs`
 
@@ -180,41 +188,6 @@ npm install
 npm run dev
 ```
 Web App will be active at: `http://localhost:5173`
-
----
-
-### 2. Multi-Container Orchestration with Docker
-
-Run the entire application stack (Frontend, Backend, Database, Nginx Reverse Proxy, Prometheus) using Docker Compose:
-
-```bash
-docker-compose up --build -d
-```
-
----
-
-## 🧪 Testing & Verification
-
-Run automated backend pytest suite:
-```bash
-cd backend
-pytest tests/
-```
-
-Test production frontend build:
-```bash
-cd frontend
-npm run build
-```
-
----
-
-## 🛡️ Security & Privacy Features
-- **EXIF Metadata Stripping**: Automatically removes GPS coordinates from uploaded JPEG/PNG images prior to saving.
-- **Privacy Shield**: Ordinary users cannot see phone numbers or email addresses of other users.
-- **Sequential Attack Protection**: Uses unguessable 6-char alphanumeric report codes (`LF-SRM-26-8K4P91`).
-- **Tokenized Route Protection**: `/track` validates both Report ID and secret 32-char access token.
-- **Role-Based Access Control (RBAC)**: Admin routes (`/admin`) require Security Staff credentials.
 
 ---
 
