@@ -26,18 +26,21 @@ class UpstashRestStorage(Storage):
     def base_exceptions(self):
         return httpx.RequestError
             
-    def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
+    def incr(self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1, **kwargs) -> int:
         if not self.url or not self.token:
             return 1
         with httpx.Client() as client:
-            resp = client.get(
-                f"{self.url}/incr/{key}", 
+            cmd = ["INCRBY", key, amount] if amount > 1 else ["INCR", key]
+            resp = client.post(
+                self.url,
+                json=cmd,
                 headers={"Authorization": f"Bearer {self.token}"}
             )
             val = resp.json().get("result", 1)
-            if val == 1:
-                client.get(
-                    f"{self.url}/expire/{key}/{expiry}", 
+            if val == amount:  # If it's the first increment, set the expiry
+                client.post(
+                    self.url,
+                    json=["EXPIRE", key, expiry],
                     headers={"Authorization": f"Bearer {self.token}"}
                 )
             return val
@@ -46,8 +49,9 @@ class UpstashRestStorage(Storage):
         if not self.url or not self.token:
             return 0
         with httpx.Client() as client:
-            resp = client.get(
-                f"{self.url}/get/{key}", 
+            resp = client.post(
+                self.url,
+                json=["GET", key],
                 headers={"Authorization": f"Bearer {self.token}"}
             )
             res = resp.json().get("result")
@@ -57,8 +61,9 @@ class UpstashRestStorage(Storage):
         if not self.url or not self.token:
             return int(time.time())
         with httpx.Client() as client:
-            resp = client.get(
-                f"{self.url}/ttl/{key}", 
+            resp = client.post(
+                self.url,
+                json=["TTL", key],
                 headers={"Authorization": f"Bearer {self.token}"}
             )
             res = resp.json().get("result", -1)
@@ -74,8 +79,9 @@ class UpstashRestStorage(Storage):
         if not self.url or not self.token:
             return
         with httpx.Client() as client:
-            client.get(
-                f"{self.url}/del/{key}", 
+            client.post(
+                self.url,
+                json=["DEL", key],
                 headers={"Authorization": f"Bearer {self.token}"}
             )
 
