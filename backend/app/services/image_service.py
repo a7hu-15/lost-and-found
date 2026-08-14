@@ -36,19 +36,12 @@ async def process_and_store_image(file: UploadFile):
             detail="Image size exceeds 10 MB limit."
         )
 
-    # Create Year/Month folder structure: uploads/2026/08/
     now = datetime.utcnow()
-    rel_folder = os.path.join(str(now.year), f"{now.month:02d}")
-    target_dir = os.path.join(UPLOAD_DIR, rel_folder)
-    os.makedirs(target_dir, exist_ok=True)
 
     # File names
     file_id = uuid.uuid4().hex
     main_filename = f"{file_id}.webp"
     thumb_filename = f"{file_id}_thumb.webp"
-
-    main_path = os.path.join(target_dir, main_filename)
-    thumb_path = os.path.join(target_dir, thumb_filename)
 
     try:
         # Open with PIL
