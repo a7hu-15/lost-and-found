@@ -19,6 +19,14 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         "sqlite+aiosqlite:///./lost_found.db"
     )
+
+    @validator("DATABASE_URL", pre=True)
+    def fix_database_url(cls, v: str) -> str:
+        if v and v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if v and "sslmode=require" in v:
+            v = v.replace("sslmode=require", "ssl=require")
+        return v
     
     # Upstash Redis
     UPSTASH_REDIS_REST_URL: str = os.getenv("UPSTASH_REDIS_REST_URL", "")
