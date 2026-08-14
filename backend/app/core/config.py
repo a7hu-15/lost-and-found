@@ -20,8 +20,9 @@ class Settings(BaseSettings):
         "sqlite+aiosqlite:///./lost_found.db"
     )
     
-    # Redis
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    # Upstash Redis
+    UPSTASH_REDIS_REST_URL: str = os.getenv("UPSTASH_REDIS_REST_URL", "")
+    UPSTASH_REDIS_REST_TOKEN: str = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
@@ -43,10 +44,10 @@ class Settings(BaseSettings):
     USE_CLOUD_STORAGE: bool = os.getenv("USE_CLOUD_STORAGE", "False").lower() == "true"
     UPLOAD_DIR: str = "uploads"  # used when USE_CLOUD_STORAGE=False
 
-    # Supabase Storage Configuration (Replaces generic cloud storage for this project)
-    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
-    SUPABASE_BUCKET: str = os.getenv("SUPABASE_BUCKET", "lost-found-images")
+    # Cloudinary Storage Configuration
+    CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
+    CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
     # SMTP / Resend Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"

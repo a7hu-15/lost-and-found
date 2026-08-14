@@ -1,6 +1,9 @@
 import os
 import aiofiles
 import httpx
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 from abc import ABC, abstractmethod
 from app.core.config import settings
 
@@ -23,38 +26,43 @@ class LocalStorage(StorageBackend):
             await f.write(data)
         return f"{self.base_url}/{filepath}"
 
-class SupabaseStorage(StorageBackend):
+class CloudinaryStorage(StorageBackend):
     """
-    Supabase Storage implementation using httpx for async uploads.
+    Cloudinary Storage implementation using the official cloudinary package.
     """
     def __init__(self):
-        self.url = settings.SUPABASE_URL
-        self.key = settings.SUPABASE_KEY
-        self.bucket = settings.SUPABASE_BUCKET
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+            api_key=settings.CLOUDINARY_API_KEY,
+            api_secret=settings.CLOUDINARY_API_SECRET,
+            secure=True
+        )
 
     async def save(self, filepath: str, data: bytes) -> str:
-        if not self.url or not self.key:
-            raise ValueError("Supabase credentials not configured")
+        if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_KEY:
+            raise ValueError("Cloudinary credentials not configured")
             
-        endpoint = f"{self.url.rstrip('/')}/storage/v1/object/{self.bucket}/{filepath}"
-        headers = {
-            "Authorization": f"Bearer {self.key}",
-            "apikey": self.key,
-            "Content-Type": "image/jpeg"
-        }
+        import tempfile
+        import asyncio
         
-        async with httpx.AsyncClient() as client:
-            response = await client.post(endpoint, content=data, headers=headers)
+        # We write to a temporary file since cloudinary python library 
+        # doesn't have an async byte upload out of the box that's non-blocking,
+        # but we can wrap the sync call in run_in_executor or just use standard sync for this demo,
+        # but wait, cloudinary uploader accepts a file-like object or bytes!
+        
+        loop = asyncio.get_event_loop()
+        def _upload():
+            response = cloudinary.uploader.upload(
+                data,
+                public_id=filepath.split('.')[0], # Cloudinary doesn't need the extension
+                resource_type="image"
+            )
+            return response.get("secure_url")
             
-            # If 400 or 409 (already exists), try PUT instead
-            if response.status_code in (400, 409):
-                response = await client.put(endpoint, content=data, headers=headers)
-                
-            response.raise_for_status()
-            
-        return f"{self.url.rstrip('/')}/storage/v1/object/public/{self.bucket}/{filepath}"
+        secure_url = await loop.run_in_executor(None, _upload)
+        return secure_url
 
 def get_storage_backend() -> StorageBackend:
     if getattr(settings, "USE_CLOUD_STORAGE", False):
-        return SupabaseStorage()
+        return CloudinaryStorage()
     return LocalStorage()

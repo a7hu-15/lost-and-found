@@ -12,8 +12,10 @@ from app.security.passwords import get_password_hash
 from app.models.user import User, UserRole
 
 async def init():
+    from app.core.config import settings
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        if settings.DATABASE_URL.startswith("sqlite"):
+            await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
         
     # Seed users for security testing

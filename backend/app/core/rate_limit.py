@@ -9,6 +9,74 @@ LIMIT_LOGIN = "10/minute"
 LIMIT_CREATE = "5/minute"
 LIMIT_SENSITIVE = "3/minute"
 
+import time
+import httpx
+from limits.aio.storage import Storage
+
+class UpstashRestStorage(Storage):
+    STORAGE_SCHEME = ["upstash"]
+    
+    def __init__(self, uri: str, **options):
+        super().__init__(uri, **options)
+        self.url = settings.UPSTASH_REDIS_REST_URL
+        self.token = settings.UPSTASH_REDIS_REST_TOKEN
+        # If url doesn't have http/https, default to https
+        if self.url and not self.url.startswith("http"):
+            self.url = "https://" + self.url
+            
+    async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
+        if not self.url or not self.token:
+            return 1
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{self.url}/incr/{key}", 
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+            val = resp.json().get("result", 1)
+            if val == 1:
+                await client.get(
+                    f"{self.url}/expire/{key}/{expiry}", 
+                    headers={"Authorization": f"Bearer {self.token}"}
+                )
+            return val
+
+    async def get(self, key: str) -> int:
+        if not self.url or not self.token:
+            return 0
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{self.url}/get/{key}", 
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+            res = resp.json().get("result")
+            return int(res) if res else 0
+
+    async def get_expiry(self, key: str) -> int:
+        if not self.url or not self.token:
+            return int(time.time())
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{self.url}/ttl/{key}", 
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+            res = resp.json().get("result", -1)
+            return int(time.time() + res) if res > 0 else int(time.time())
+
+    async def check(self) -> bool:
+        return True
+
+    async def reset(self) -> int:
+        return 0
+
+    async def clear(self, key: str) -> None:
+        if not self.url or not self.token:
+            return
+        async with httpx.AsyncClient() as client:
+            await client.get(
+                f"{self.url}/del/{key}", 
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+
 # In serverless environments, in-memory limits are isolated per function instance.
 # We must use Redis to share the rate limit state across all instances.
 limiter_kwargs = {
@@ -17,8 +85,8 @@ limiter_kwargs = {
     "enabled": not is_testing
 }
 
-if not is_testing and not settings.REDIS_URL.startswith("redis://localhost"):
-    limiter_kwargs["storage_uri"] = settings.REDIS_URL
+if not is_testing and settings.UPSTASH_REDIS_REST_URL:
+    limiter_kwargs["storage_uri"] = "upstash://"
 
 limiter = Limiter(**limiter_kwargs)
 
