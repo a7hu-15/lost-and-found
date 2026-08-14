@@ -57,10 +57,13 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
-    # SMTP / Resend Configuration
+    # SMTP Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
-    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
-    SMTP_FROM: str = "Cloud Lost & Found <onboarding@resend.dev>" # Default Resend dev email
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 465))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "Cloud Lost & Found <cloudlostfound.platform@gmail.com>")
     MOCK_SMTP: bool = False
 
     class Config:

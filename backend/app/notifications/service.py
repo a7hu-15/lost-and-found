@@ -36,33 +36,33 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
         logger.info(f"MOCK SMTP ENABLED: Bypassed physical email dispatch to {to_email}")
         return
 
-    if settings.RESEND_API_KEY:
+    if settings.SMTP_USER and settings.SMTP_PASSWORD:
         try:
-            payload = {
-                "from": settings.SMTP_FROM,
-                "to": to_email,
-                "subject": subject,
-                "text": body_text
-            }
-            if body_html:
-                payload["html"] = body_html
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
 
-            headers = {
-                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            
-            response = httpx.post(
-                "https://api.resend.com/emails", 
-                json=payload, 
-                headers=headers,
-                timeout=10.0
-            )
-            response.raise_for_status()
-            logger.info(f"Email sent successfully via Resend to {to_email}")
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = settings.SMTP_FROM
+            msg["To"] = to_email
+
+            if body_html:
+                part1 = MIMEText(body_text, "plain")
+                part2 = MIMEText(body_html, "html")
+                msg.attach(part1)
+                msg.attach(part2)
+            else:
+                msg.attach(MIMEText(body_text, "plain"))
+
+            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.send_message(msg)
+
+            logger.info(f"Email sent successfully via SMTP to {to_email}")
             return
         except Exception as e:
-            logger.error(f"Failed to send email via Resend to {to_email}: {str(e)}")
+            logger.error(f"Failed to send email via SMTP to {to_email}: {str(e)}")
             return
 
     return
