@@ -22,6 +22,7 @@ backend/uploads/*
 .env.local
 .env.development
 .env.production
+.env.vercel
 
 # Python Cache & Bytecode
 __pycache__/
@@ -52,3 +53,10 @@ infra/nginx/ssl/*.crt
 infra/kubernetes/tls-secret.yaml
 infra/kubernetes/secret.yaml
 test_report_id.txt
+
+# Playwright & QA test artifacts
+dummy.png
+*.png
+frontend/reports/
+frontend/test-results/
+.github/
