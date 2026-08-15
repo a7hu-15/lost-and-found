@@ -48,14 +48,15 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
     
-    # Storage
-    USE_CLOUD_STORAGE: bool = os.getenv("USE_CLOUD_STORAGE", "False").lower() == "true"
-    UPLOAD_DIR: str = "uploads"  # used when USE_CLOUD_STORAGE=False
-
     # Cloudinary Storage Configuration
     CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
+
+    # Storage
+    USE_CLOUD_STORAGE: bool = os.getenv("USE_CLOUD_STORAGE", "True" if os.getenv("CLOUDINARY_CLOUD_NAME") else "False").lower() == "true"
+    UPLOAD_DIR: str = "uploads"  # used when USE_CLOUD_STORAGE=False
+
 
     # SMTP Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
@@ -70,5 +71,6 @@ class Settings(BaseSettings):
         case_sensitive = True
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 settings = Settings()
