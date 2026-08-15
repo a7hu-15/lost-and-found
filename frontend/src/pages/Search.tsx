@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // React component
 import { Search as SearchIcon, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { LostItem, FoundItem } from '../types';
