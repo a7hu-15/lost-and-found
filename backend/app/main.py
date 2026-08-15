@@ -33,7 +33,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={"detail": "An internal server error occurred. Please contact support if the issue persists."}
+        content={"detail": f"Internal Server Error: {str(exc)}"}
     )
 
 app.state.limiter = limiter
