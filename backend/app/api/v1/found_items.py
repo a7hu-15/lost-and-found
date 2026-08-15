@@ -17,8 +17,6 @@ from app.notifications.service import send_report_confirmation_email
 from app.services.image_service import process_and_store_image
 
 import re
-import asyncio
-_creation_lock = asyncio.Lock()
 
 from app.core.rate_limit import limiter, LIMIT_CREATE
 from fastapi import Request
@@ -85,55 +83,54 @@ async def create_found_item(
             )
         contact_phone = f"+91{core_digits}" if phone_raw.startswith('+91') else core_digits
 
-    async with _creation_lock:
-        # Prevent duplicate submissions (Debounce / Idempotency)
-        recent_item = await db.execute(
-            select(FoundItem).where(
-                FoundItem.contact_email == contact_email,
-                FoundItem.title == title,
-                FoundItem.created_at >= (datetime.utcnow() - timedelta(minutes=5))
-            )
+    # Prevent duplicate submissions (Debounce / Idempotency)
+    recent_item = await db.execute(
+        select(FoundItem).where(
+            FoundItem.contact_email == contact_email,
+            FoundItem.title == title,
+            FoundItem.created_at >= (datetime.utcnow() - timedelta(minutes=5))
         )
-        if recent_item.scalars().first():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A similar report was recently submitted.")
-    
-        report_id = generate_report_id()
-        access_token = generate_access_token()
-    
-        # Process image if uploaded
-        image_url = None
-        thumbnail_url = None
-        if file and file.filename:
-            image_url, thumbnail_url = await process_and_store_image(file)
-    
-        # XSS Sanitization
-        title = html.escape(title.strip())
-        location = html.escape(location.strip())
-        description = html.escape(description.strip())
-        category = html.escape(category.strip())
-        storage_location = html.escape(storage_location.strip()) if storage_location else None
-        brand = html.escape(brand.strip()) if brand else None
-        color = html.escape(color.strip()) if color else None
+    )
+    if recent_item.scalars().first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A similar report was recently submitted.")
 
-        found_item = FoundItem(
-            report_id=report_id,
-            access_token=access_token,
-            title=title,
-            category=category,
-            brand=brand,
-            color=color,
-            location=location,
-            found_date=found_date,
-            description=description,
-            storage_location=storage_location,
-            image_url=image_url,
-            thumbnail_url=thumbnail_url,
-            contact_email=contact_email,
-            contact_phone=contact_phone,
-            status=ItemStatus.REPORTED
-        )
-        db.add(found_item)
-        await db.flush()
+    report_id = generate_report_id()
+    access_token = generate_access_token()
+
+    # Process image if uploaded
+    image_url = None
+    thumbnail_url = None
+    if file and file.filename:
+        image_url, thumbnail_url = await process_and_store_image(file)
+
+    # XSS Sanitization
+    title = html.escape(title.strip())
+    location = html.escape(location.strip())
+    description = html.escape(description.strip())
+    category = html.escape(category.strip())
+    storage_location = html.escape(storage_location.strip()) if storage_location else None
+    brand = html.escape(brand.strip()) if brand else None
+    color = html.escape(color.strip()) if color else None
+
+    found_item = FoundItem(
+        report_id=report_id,
+        access_token=access_token,
+        title=title,
+        category=category,
+        brand=brand,
+        color=color,
+        location=location,
+        found_date=found_date,
+        description=description,
+        storage_location=storage_location,
+        image_url=image_url,
+        thumbnail_url=thumbnail_url,
+        contact_email=contact_email,
+        contact_phone=contact_phone,
+        status=ItemStatus.REPORTED
+    )
+    db.add(found_item)
+    await db.flush()
 
     # If explicitly linked to a lost item via "I Found This Item" button
     if lost_item_id:
