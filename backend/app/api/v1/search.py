@@ -79,3 +79,9 @@ async def search_items(
     found_items = found_result.scalars().all()
 
     return {
+        "query": q,
+        "lost_count": len(lost_items),
+        "found_count": len(found_items),
+        "lost_items": [LostItemOut.model_validate(item) for item in lost_items],
+        "found_items": [FoundItemOut.model_validate(item) for item in found_items]
+    }
