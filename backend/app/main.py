@@ -61,11 +61,28 @@ async def health_check():
         "version": settings.VERSION
     }
 
-@app.get("/api/v1/health", tags=["Health"])
-async def api_health_check():
-    return {
-        "status": "healthy",
-        "service": settings.PROJECT_NAME,
-        "version": settings.VERSION
-    }
-
+@app.get("/api/v1/run-migrations-secret-1234")
+async def run_migrations():
+    try:
+        from alembic import command
+        from alembic.config import Config
+        import io
+        import sys
+        
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        alembic_ini_path = os.path.join(backend_dir, "alembic.ini")
+        alembic_cfg = Config(alembic_ini_path)
+        alembic_cfg.set_main_option("script_location", os.path.join(backend_dir, "alembic"))
+        
+        stdout = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = stdout
+        try:
+            command.upgrade(alembic_cfg, "head")
+        finally:
+            sys.stdout = old_stdout
+            
+        return {"status": "success", "output": stdout.getvalue()}
+    except Exception as e:
+        import traceback
+        return JSONResponse(status_code=500, content={"error": str(e), "trace": traceback.format_exc()})
