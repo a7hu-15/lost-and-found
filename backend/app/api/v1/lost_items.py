@@ -2,7 +2,7 @@ from typing import List, Optional
 import html
 from fastapi import Request
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -39,6 +39,7 @@ async def create_lost_item(
     color: Optional[str] = Form(None),
     reward: Optional[float] = Form(0.0),
     file: Optional[UploadFile] = File(None),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: AsyncSession = Depends(get_db)
 ):
     # Server-side validation: Length and boundary checks
@@ -167,8 +168,9 @@ async def create_lost_item(
     await db.commit()
     await db.refresh(lost_item)
     
-    # Verification email
-    send_verification_email(
+    # Verification email sent in background to prevent timeout
+    background_tasks.add_task(
+        send_verification_email,
         email=lost_item.contact_email,
         token=v_token.token,
         report_id=lost_item.report_id

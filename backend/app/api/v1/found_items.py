@@ -1,7 +1,7 @@
 from typing import List, Optional
 import html
 from datetime import date, datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -39,6 +39,7 @@ async def create_found_item(
     brand: Optional[str] = Form(None),
     color: Optional[str] = Form(None),
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: AsyncSession = Depends(get_db)
 ):
     # Server-side validation: Length and boundary checks
@@ -173,8 +174,9 @@ async def create_found_item(
     await db.commit()
     await db.refresh(found_item)
     
-    # Verification email
-    send_verification_email(
+    # Verification email sent in background to prevent timeout
+    background_tasks.add_task(
+        send_verification_email,
         email=found_item.contact_email,
         token=v_token.token,
         report_id=found_item.report_id
