@@ -1,31 +1,11 @@
+import sys
+import os
 import traceback
 
-async def fallback_app(scope, receive, send):
-    assert scope['type'] == 'http'
-    await send({
-        'type': 'http.response.start',
-        'status': 200,
-        'headers': [
-            [b'content-type', b'text/plain'],
-        ]
-    })
-    await send({
-        'type': 'http.response.body',
-        'body': str(GLOBAL_ERROR).encode('utf-8')
-    })
+# Add the 'backend' directory to sys.path so 'app' can be imported
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    import sys
-    import os
-    
-    # Try multiple ways to add backend to sys.path
-    try:
-        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    except NameError:
-        pass
-    sys.path.append(os.path.join(os.getcwd(), 'backend'))
-    sys.path.append(os.getcwd())
-
     from fastapi import FastAPI, Request
     from fastapi.responses import JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
@@ -87,8 +67,14 @@ try:
             "service": settings.PROJECT_NAME,
             "version": settings.VERSION
         }
-
 except Exception as e:
-    GLOBAL_ERROR = traceback.format_exc()
-    app = fallback_app
+    from fastapi import FastAPI, Request
+    from fastapi.responses import JSONResponse
+    err = traceback.format_exc()
+    
+    app = FastAPI()
+    
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"])
+    async def catch_all(request: Request, path: str):
+        return JSONResponse(status_code=200, content={"detail": "Startup Error", "error": err})
 
