@@ -21,3 +21,4 @@ boto3==1.35.0
 aiofiles==23.2.1
 cloudinary==1.38.0
 upstash-redis==1.2.0
+httpx==0.26.0
