@@ -64,6 +64,6 @@ class LostItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user = relationship("User", back_populates="lost_items")
+    user = relationship("User", back_populates="lost_items", foreign_keys=[user_id])
     matches = relationship("MatchScore", back_populates="lost_item", cascade="all, delete-orphan")
     information_tips = relationship("LostItemInformation", back_populates="lost_item", cascade="all, delete-orphan")

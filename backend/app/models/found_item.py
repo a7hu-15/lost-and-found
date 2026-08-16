@@ -41,5 +41,5 @@ class FoundItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    reporter = relationship("User", back_populates="found_items")
+    reporter = relationship("User", back_populates="found_items", foreign_keys=[reporter_id])
     matches = relationship("MatchScore", back_populates="found_item", cascade="all, delete-orphan")

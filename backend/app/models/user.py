@@ -52,7 +52,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    lost_items = relationship("LostItem", back_populates="user", cascade="all, delete-orphan")
-    found_items = relationship("FoundItem", back_populates="reporter", cascade="all, delete-orphan")
-    claims = relationship("Claim", back_populates="claimant", foreign_keys="Claim.claimant_id", cascade="all, delete-orphan")
+    lost_items = relationship("LostItem", back_populates="user", foreign_keys="[LostItem.user_id]", cascade="all, delete-orphan")
+    found_items = relationship("FoundItem", back_populates="reporter", foreign_keys="[FoundItem.reporter_id]", cascade="all, delete-orphan")
+    claims = relationship("Claim", back_populates="claimant", foreign_keys="[Claim.claimant_id]", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="user")
