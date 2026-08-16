@@ -8,14 +8,14 @@
       }
     },
     {
-      "src": "backend/main.py",
+      "src": "backend/app/main.py",
       "use": "@vercel/python"
     }
   ],
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/backend/main.py"
+      "destination": "/backend/app/main.py"
     },
     {
       "source": "/(.*)",
