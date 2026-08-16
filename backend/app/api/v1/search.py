@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
 from app.database.session import get_db
-from app.models.lost_item import LostItem, ItemStatus
+from app.models.lost_item import LostItem, ItemStatus, ModerationStatus
 from app.models.found_item import FoundItem
 from app.schemas.lost_item import LostItemOut
 from app.schemas.found_item import FoundItemOut
@@ -31,13 +31,14 @@ async def search_items(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Color filter must not exceed 50 characters.")
 
     # Query lost items (Excluding HIDDEN items)
-    lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN)
+    lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN, LostItem.moderation_status == ModerationStatus.APPROVED)
     if q:
         lost_query = lost_query.where(
             or_(
                 LostItem.title.ilike(f"%{q}%"),
                 LostItem.description.ilike(f"%{q}%"),
                 LostItem.brand.ilike(f"%{q}%"),
+                LostItem.report_id.ilike(f"%{q}%"),
             )
         )
     if category:
@@ -51,13 +52,14 @@ async def search_items(
     lost_items = lost_result.scalars().all()
 
     # Query found items (Excluding HIDDEN items)
-    found_query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN)
+    found_query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN, FoundItem.moderation_status == ModerationStatus.APPROVED)
     if q:
         found_query = found_query.where(
             or_(
                 FoundItem.title.ilike(f"%{q}%"),
                 FoundItem.description.ilike(f"%{q}%"),
                 FoundItem.brand.ilike(f"%{q}%"),
+                FoundItem.report_id.ilike(f"%{q}%"),
             )
         )
     if category:
