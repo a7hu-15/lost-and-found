@@ -62,7 +62,7 @@ async def health_check():
     }
 
 @app.get("/api/v1/run-migrations-secret-1234")
-async def run_migrations():
+def run_migrations():
     try:
         from alembic import command
         from alembic.config import Config
