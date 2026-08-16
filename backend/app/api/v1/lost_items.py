@@ -82,8 +82,9 @@ async def create_lost_item(
     moderator = get_text_moderator()
     is_text_flagged, masked_description = moderator.moderate_text(description)
     is_title_flagged, masked_title = moderator.moderate_text(title)
+    is_location_flagged, masked_location = moderator.moderate_text(location)
     
-    text_flagged = is_text_flagged or is_title_flagged
+    text_flagged = is_text_flagged or is_title_flagged or is_location_flagged
     
     # Calculate ModerationStatus
     # Starts at PENDING_VERIFICATION until email is verified
@@ -102,7 +103,7 @@ async def create_lost_item(
         category=None,
         brand=brand,
         color=color,
-        location=location,
+        location=masked_location,
         lost_date=lost_date,
         description=masked_description,
         reward=reward or 0.0,

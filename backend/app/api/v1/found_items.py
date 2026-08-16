@@ -93,8 +93,10 @@ async def create_found_item(
     moderator = get_text_moderator()
     is_text_flagged, masked_description = moderator.moderate_text(description)
     is_title_flagged, masked_title = moderator.moderate_text(title)
+    is_location_flagged, masked_location = moderator.moderate_text(location)
+    is_storage_flagged, masked_storage_location = moderator.moderate_text(storage_location)
     
-    text_flagged = is_text_flagged or is_title_flagged
+    text_flagged = is_text_flagged or is_title_flagged or is_location_flagged or is_storage_flagged
     
     moderation_status = ModerationStatus.PENDING_VERIFICATION
     flag_reason = []
@@ -110,10 +112,10 @@ async def create_found_item(
         category=None,
         brand=brand,
         color=color,
-        location=location,
+        location=masked_location,
         found_date=found_date,
         description=masked_description,
-        storage_location=storage_location,
+        storage_location=masked_storage_location,
         image_url=image_url,
         thumbnail_url=thumbnail_url,
         contact_email=contact_email,
