@@ -8,9 +8,6 @@ import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import { Profile } from './pages/Profile';
-import { Settings } from './pages/Settings';
-import { InformationTips } from './pages/InformationTips';
 import { VerifyEmail } from './pages/VerifyEmail';
 import { LostItems } from './pages/LostItems';
 import { ReportLost } from './pages/ReportLost';
@@ -19,7 +16,6 @@ import { ReportFound } from './pages/ReportFound';
 import { Search } from './pages/Search';
 import { Matches } from './pages/Matches';
 import { Claims } from './pages/Claims';
-import { ClaimDetails } from './pages/ClaimDetails';
 import { TrackReport } from './pages/TrackReport';
 import { RecoverReport } from './pages/RecoverReport';
 import { Support } from './pages/Support';
@@ -96,9 +92,7 @@ export const App: React.FC = () => {
               <Route path="/track" element={<TrackReport />} />
               <Route path="/report/:reportId" element={<TrackReport />} />
               <Route path="/recover" element={<RecoverReport />} />
-              <Route path="/claims/:id" element={<ClaimDetails />} />
               <Route path="/support" element={<Support />} />
-              <Route path="/information-tips" element={<InformationTips />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/matches" element={<Matches />} />
