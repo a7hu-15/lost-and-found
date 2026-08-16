@@ -67,5 +67,6 @@ except Exception as e:
     
     @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
     async def catch_all(request: Request, path: str):
-        return JSONResponse(status_code=500, content={"detail": "Startup Error", "error": err})
+        # RETURN 200 TO BYPASS VERCEL 500 INTERCEPTION
+        return JSONResponse(status_code=200, content={"detail": "Startup Error", "error": err})
 
