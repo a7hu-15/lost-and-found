@@ -30,52 +30,52 @@ async def search_items(
     if color and len(color.strip()) > 50:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Color filter must not exceed 50 characters.")
 
-    # Query lost items (Excluding HIDDEN items)
-    lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN, LostItem.moderation_status == ModerationStatus.APPROVED)
-    if q:
-        lost_query = lost_query.where(
-            or_(
-                LostItem.title.ilike(f"%{q}%"),
-                LostItem.description.ilike(f"%{q}%"),
-                LostItem.brand.ilike(f"%{q}%"),
-                LostItem.report_id.ilike(f"%{q}%"),
+    is_report_id_search = bool(q and "LF-SRM-" in q.upper())
+
+    # Query lost items
+    if is_report_id_search:
+        lost_query = select(LostItem).where(LostItem.report_id.ilike(f"%{q}%"))
+    else:
+        lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN, LostItem.moderation_status == ModerationStatus.APPROVED)
+        if q:
+            lost_query = lost_query.where(
+                or_(
+                    LostItem.title.ilike(f"%{q}%"),
+                    LostItem.description.ilike(f"%{q}%"),
+                    LostItem.brand.ilike(f"%{q}%"),
+                )
             )
-        )
-    if category:
-        lost_query = lost_query.where(LostItem.category.ilike(f"%{category}%"))
-    if location:
-        lost_query = lost_query.where(LostItem.location.ilike(f"%{location}%"))
-    if color:
-        lost_query = lost_query.where(LostItem.color.ilike(f"%{color}%"))
-        
+        if category:
+            lost_query = lost_query.where(LostItem.category.ilike(f"%{category}%"))
+        if location:
+            lost_query = lost_query.where(LostItem.location.ilike(f"%{location}%"))
+        if color:
+            lost_query = lost_query.where(LostItem.color.ilike(f"%{color}%"))
+
     lost_result = await db.execute(lost_query.order_by(LostItem.created_at.desc()))
     lost_items = lost_result.scalars().all()
 
-    # Query found items (Excluding HIDDEN items)
-    found_query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN, FoundItem.moderation_status == ModerationStatus.APPROVED)
-    if q:
-        found_query = found_query.where(
-            or_(
-                FoundItem.title.ilike(f"%{q}%"),
-                FoundItem.description.ilike(f"%{q}%"),
-                FoundItem.brand.ilike(f"%{q}%"),
-                FoundItem.report_id.ilike(f"%{q}%"),
+    # Query found items
+    if is_report_id_search:
+        found_query = select(FoundItem).where(FoundItem.report_id.ilike(f"%{q}%"))
+    else:
+        found_query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN, FoundItem.moderation_status == ModerationStatus.APPROVED)
+        if q:
+            found_query = found_query.where(
+                or_(
+                    FoundItem.title.ilike(f"%{q}%"),
+                    FoundItem.description.ilike(f"%{q}%"),
+                    FoundItem.brand.ilike(f"%{q}%"),
+                )
             )
-        )
-    if category:
-        found_query = found_query.where(FoundItem.category.ilike(f"%{category}%"))
-    if location:
-        found_query = found_query.where(FoundItem.location.ilike(f"%{location}%"))
-    if color:
-        found_query = found_query.where(FoundItem.color.ilike(f"%{color}%"))
+        if category:
+            found_query = found_query.where(FoundItem.category.ilike(f"%{category}%"))
+        if location:
+            found_query = found_query.where(FoundItem.location.ilike(f"%{location}%"))
+        if color:
+            found_query = found_query.where(FoundItem.color.ilike(f"%{color}%"))
 
     found_result = await db.execute(found_query.order_by(FoundItem.created_at.desc()))
     found_items = found_result.scalars().all()
 
     return {
-        "query": q,
-        "lost_count": len(lost_items),
-        "found_count": len(found_items),
-        "lost_items": [LostItemOut.model_validate(item) for item in lost_items],
-        "found_items": [FoundItemOut.model_validate(item) for item in found_items]
-    }
