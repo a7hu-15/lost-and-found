@@ -1,69 +1,71 @@
+import traceback
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from slowapi.errors import RateLimitExceeded
-import os
-
-from app.core.config import settings
-from app.api.v1.router import api_router
-from app.database.session import engine
-from app.database.base import Base
-import app.models  # Ensure models are registered with Base
-
-from app.core.rate_limit import limiter
-
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
-
 from fastapi.responses import JSONResponse
-import logging
 
-logger = logging.getLogger(__name__)
+try:
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.staticfiles import StaticFiles
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+    import os
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": f"Internal Server Error: {str(exc)}"}
+    from app.core.config import settings
+    from app.api.v1.router import api_router
+    from app.database.session import engine
+    from app.database.base import Base
+    import app.models  # Ensure models are registered with Base
+
+    from app.core.rate_limit import limiter
+    import logging
+
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        version=settings.VERSION,
+        openapi_url=f"{settings.API_V1_STR}/openapi.json",
+        docs_url="/docs",
+        redoc_url="/redoc"
     )
 
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    logger = logging.getLogger(__name__)
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal Server Error: {str(exc)}"}
+        )
 
-# Prometheus Monitoring Metrics removed for Serverless architecture
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Include API Router
-app.include_router(api_router, prefix=settings.API_V1_STR)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-# Ensure upload directory exists
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/static/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+    app.include_router(api_router, prefix=settings.API_V1_STR)
 
-# Startup event removed for Serverless execution.
-# Database initialization should be performed manually via init_db.py or Alembic.
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    app.mount("/static/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
-@app.get("/health", tags=["Health"])
-async def health_check():
-    return {
-        "status": "healthy",
-        "service": settings.PROJECT_NAME,
-        "version": settings.VERSION
-    }
+    @app.get("/health", tags=["Health"])
+    async def health_check():
+        return {
+            "status": "healthy",
+            "service": settings.PROJECT_NAME,
+            "version": settings.VERSION
+        }
+
+except Exception as e:
+    err = traceback.format_exc()
+    app = FastAPI()
+    
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+    async def catch_all(request: Request, path: str):
+        return JSONResponse(status_code=500, content={"detail": "Startup Error", "error": err})
+
