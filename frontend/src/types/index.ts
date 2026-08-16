@@ -13,6 +13,7 @@ export interface User {
 }
 
 export type ItemStatus = 'REPORTED' | 'MATCHED' | 'CLAIMED' | 'RETURNED' | 'CLOSED' | 'HIDDEN';
+export type ModerationStatus = 'PENDING_VERIFICATION' | 'PENDING_MODERATION' | 'APPROVED' | 'REJECTED';
 
 export interface LostItem {
   id: string;
@@ -31,6 +32,10 @@ export interface LostItem {
   contact_email: string;
   contact_phone?: string;
   status: ItemStatus;
+  moderation_status: ModerationStatus;
+  text_moderation_result?: string;
+  image_moderation_result?: string;
+  flag_reason?: string;
   created_at: string;
 }
 
@@ -51,6 +56,10 @@ export interface FoundItem {
   contact_email: string;
   contact_phone?: string;
   status: ItemStatus;
+  moderation_status: ModerationStatus;
+  text_moderation_result?: string;
+  image_moderation_result?: string;
+  flag_reason?: string;
   created_at: string;
 }
 

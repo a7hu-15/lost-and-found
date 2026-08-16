@@ -38,6 +38,12 @@ class ItemStatusUpdate(BaseModel):
     moderation_reason: Optional[str] = None
     admin_notes: Optional[str] = None
 
+from app.models.lost_item import ModerationStatus
+
+class ModerationUpdate(BaseModel):
+    moderation_status: ModerationStatus
+    admin_notes: Optional[str] = None
+
 class TrendDataPoint(BaseModel):
     date: str
     lost_count: int

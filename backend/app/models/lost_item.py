@@ -17,6 +17,13 @@ class ItemStatus(str, enum.Enum):
     CLOSED = "CLOSED"
     HIDDEN = "HIDDEN"
 
+class ModerationStatus(str, enum.Enum):
+    PENDING_VERIFICATION = "PENDING_VERIFICATION"
+    PENDING_MODERATION = "PENDING_MODERATION"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    FLAGGED = "FLAGGED"
+
 def generate_report_id() -> str:
     chars = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"LF-SRM-26-{chars}"
@@ -33,7 +40,7 @@ class LostItem(Base):
     user_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    category: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
     brand: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     color: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     location: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
@@ -46,6 +53,13 @@ class LostItem(Base):
     contact_email: Mapped[str] = mapped_column(String(255), nullable=False)
     contact_phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     status: Mapped[ItemStatus] = mapped_column(Enum(ItemStatus), default=ItemStatus.REPORTED, nullable=False)
+    
+    moderation_status: Mapped[ModerationStatus] = mapped_column(Enum(ModerationStatus), default=ModerationStatus.PENDING_VERIFICATION, nullable=False)
+    text_moderation_result: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    image_moderation_result: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    flag_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    reviewed_by: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -8,6 +8,7 @@ from app.models.support_ticket import SupportTicket, TicketStatus
 from app.models.staff_invitation import StaffInvitation
 from app.models.password_reset import PasswordResetToken
 from app.models.item_information import LostItemInformation, TipStatus
+from app.models.verification import VerificationToken, ReportType
 
 __all__ = [
     "User",
@@ -24,4 +25,6 @@ __all__ = [
     "TicketStatus",
     "StaffInvitation",
     "PasswordResetToken",
+    "VerificationToken",
+    "ReportType",
 ]

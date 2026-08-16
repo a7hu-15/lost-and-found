@@ -3,21 +3,7 @@ import { ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Upload, Sparkles, Ext
 import api from '../services/api';
 import { ImageUploader } from '../components/ImageUploader';
 
-const validateIndianMobile = (phone: string): { isValid: boolean; normalized?: string } => {
-  if (!phone || !phone.trim()) return { isValid: true };
-  const phoneRaw = phone.trim();
-  const digits = phoneRaw.replace(/\D/g, '');
-  let coreDigits = digits;
-  if (phoneRaw.startsWith('+91')) {
-    coreDigits = digits.startsWith('91') ? digits.slice(2) : digits;
-  } else if (digits.length === 12 && digits.startsWith('91')) {
-    coreDigits = digits.slice(2);
-  }
-  if (!/^[6-9]\d{9}$/.test(coreDigits)) {
-    return { isValid: false };
-  }
-  return { isValid: true, normalized: phoneRaw.startsWith('+91') ? `+91${coreDigits}` : coreDigits };
-};
+
 
 export const ReportLost: React.FC = () => {
   const [step, setStep] = useState(1);
@@ -25,7 +11,6 @@ export const ReportLost: React.FC = () => {
   const [error, setError] = useState('');
   
   // Form State
-  const [category, setCategory] = useState('');
   const [brand, setBrand] = useState('');
   const [color, setColor] = useState('');
   const [title, setTitle] = useState('');
@@ -33,22 +18,11 @@ export const ReportLost: React.FC = () => {
   const [lostDate, setLostDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [contactEmail, setContactEmail] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [createdItem, setCreatedItem] = useState<{ report_id: string; access_token: string } | null>(null);
 
-  const categories = [
-    'Electronics',
-    'Wallet',
-    'Bag',
-    'Phone',
-    'Keys',
-    'ID Card'
-  ];
-
   const handleAIDetected = (detected: { category: string; brand: string; color: string }) => {
-    if (detected.category) setCategory(detected.category.slice(0, 50));
     if (detected.brand) setBrand(detected.brand.slice(0, 50));
     if (detected.color) setColor(detected.color.slice(0, 50));
   };
@@ -82,7 +56,7 @@ export const ReportLost: React.FC = () => {
     if (loading) return;
     setError('');
 
-    const calculatedTitle = (title || `${color} ${brand} ${category}`).trim();
+    const calculatedTitle = (title || `${color} ${brand}`).trim();
     if (calculatedTitle.length > 100) {
       setError('Title must not exceed 100 characters.');
       return;
@@ -110,27 +84,19 @@ export const ReportLost: React.FC = () => {
       return;
     }
 
-    const phoneValidation = validateIndianMobile(contactPhone);
-    if (!phoneValidation.isValid) {
-      setError('Please enter a valid Indian mobile number (10 digits starting with 6–9), or leave the field blank.');
-      return;
-    }
+
 
     setLoading(true);
 
     try {
       const formData = new FormData();
       formData.append('title', calculatedTitle);
-      formData.append('category', category);
       if (brand) formData.append('brand', brand);
       if (color) formData.append('color', color);
       formData.append('location', location);
       formData.append('lost_date', lostDate);
       formData.append('description', description);
       formData.append('contact_email', contactEmail);
-      if (contactPhone && phoneValidation.normalized) {
-        formData.append('contact_phone', phoneValidation.normalized);
-      }
       if (uploadedFile) formData.append('file', uploadedFile);
 
       const res = await api.post('/lost/create', formData);
@@ -254,23 +220,16 @@ export const ReportLost: React.FC = () => {
             />
 
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-2">Category *</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={`p-2.5 rounded border text-left transition-all ${
-                      category === cat
-                        ? 'bg-amber-950/40 border-amber-500 text-amber-300 font-bold'
-                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1">Item Title *</label>
+              <input
+                type="text"
+                required
+                maxLength={100}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Blue Macbook Air"
+                className="saas-input w-full py-2 px-3"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -302,7 +261,7 @@ export const ReportLost: React.FC = () => {
             <div className="flex justify-end pt-2">
               <button
                 type="button"
-                disabled={!category}
+                disabled={!title}
                 onClick={() => setStep(2)}
                 className="saas-button-primary text-xs flex items-center gap-1.5"
               >
@@ -428,20 +387,7 @@ export const ReportLost: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Indian Mobile Number (Optional)</label>
-              <input
-                type="tel"
-                maxLength={15}
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="9876543210 or +919876543210"
-                className="saas-input w-full py-2 px-3"
-              />
-              <p className="text-[11px] text-zinc-500 mt-1">
-                Enter a 10-digit Indian mobile number starting with 6–9, option with +91 prefix.
-              </p>
-            </div>
+
 
             {/* Trust Indicators */}
             <div className="bg-zinc-900 border border-zinc-800 rounded p-3 text-[11px] font-mono text-zinc-400 space-y-1">

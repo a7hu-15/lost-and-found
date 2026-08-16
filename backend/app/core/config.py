@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     MATCH_THRESHOLD: float = 80.0
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", f"https://{os.getenv('VERCEL_PROJECT_PRODUCTION_URL', os.getenv('VERCEL_URL'))}" if os.getenv("VERCEL_URL") or os.getenv("VERCEL_PROJECT_PRODUCTION_URL") else "http://localhost:5173")
     
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -56,12 +57,10 @@ class Settings(BaseSettings):
     # Storage
     USE_CLOUD_STORAGE: bool = os.getenv("USE_CLOUD_STORAGE", "True" if os.getenv("CLOUDINARY_CLOUD_NAME") else "False").lower() == "true"
     UPLOAD_DIR: str = "uploads"  # used when USE_CLOUD_STORAGE=False
-
-
     # SMTP Configuration
     SUPPORT_EMAIL: str = "cloudlostfound.platform@gmail.com"
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 465))
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_FROM: str = os.getenv("SMTP_FROM", "Cloud Lost & Found <cloudlostfound.platform@gmail.com>")

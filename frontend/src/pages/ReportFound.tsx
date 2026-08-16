@@ -4,21 +4,7 @@ import { ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, ExternalLink, Lock, S
 import api from '../services/api';
 import { ImageUploader } from '../components/ImageUploader';
 
-const validateIndianMobile = (phone: string): { isValid: boolean; normalized?: string } => {
-  if (!phone || !phone.trim()) return { isValid: true };
-  const phoneRaw = phone.trim();
-  const digits = phoneRaw.replace(/\D/g, '');
-  let coreDigits = digits;
-  if (phoneRaw.startsWith('+91')) {
-    coreDigits = digits.startsWith('91') ? digits.slice(2) : digits;
-  } else if (digits.length === 12 && digits.startsWith('91')) {
-    coreDigits = digits.slice(2);
-  }
-  if (!/^[6-9]\d{9}$/.test(coreDigits)) {
-    return { isValid: false };
-  }
-  return { isValid: true, normalized: phoneRaw.startsWith('+91') ? `+91${coreDigits}` : coreDigits };
-};
+
 
 export const ReportFound: React.FC = () => {
   const locationState = useLocation().state as { linkedLostItem?: any } | undefined;
@@ -29,7 +15,6 @@ export const ReportFound: React.FC = () => {
   const [error, setError] = useState('');
 
   // Form State
-  const [category, setCategory] = useState(linkedLostItem?.category || '');
   const [brand, setBrand] = useState(linkedLostItem?.brand || '');
   const [color, setColor] = useState(linkedLostItem?.color || '');
   const [title, setTitle] = useState(linkedLostItem?.title || '');
@@ -38,7 +23,6 @@ export const ReportFound: React.FC = () => {
   const [description, setDescription] = useState('');
   const [storageLocation, setStorageLocation] = useState('Campus Security Office - Gate 1');
   const [contactEmail, setContactEmail] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [createdItem, setCreatedItem] = useState<{ report_id: string; access_token: string } | null>(null);
@@ -52,7 +36,6 @@ export const ReportFound: React.FC = () => {
   ];
 
   const handleAIDetected = (detected: { category: string; brand: string; color: string }) => {
-    if (detected.category) setCategory(detected.category.slice(0, 50));
     if (detected.brand) setBrand(detected.brand.slice(0, 50));
     if (detected.color) setColor(detected.color.slice(0, 50));
   };
@@ -94,7 +77,7 @@ export const ReportFound: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    const calculatedTitle = (title || `${color} ${brand} ${category}`).trim();
+    const calculatedTitle = (title || `${color} ${brand}`).trim();
     if (calculatedTitle.length > 100) {
       setError('Item Title must not exceed 100 characters.');
       return;
@@ -122,18 +105,13 @@ export const ReportFound: React.FC = () => {
       return;
     }
 
-    const phoneValidation = validateIndianMobile(contactPhone);
-    if (!phoneValidation.isValid) {
-      setError('Please enter a valid Indian mobile number (10 digits starting with 6–9), or leave the field blank.');
-      return;
-    }
+
 
     setLoading(true);
 
     try {
       const formData = new FormData();
       formData.append('title', calculatedTitle);
-      formData.append('category', category);
       if (brand) formData.append('brand', brand);
       if (color) formData.append('color', color);
       formData.append('location', location);
@@ -141,9 +119,6 @@ export const ReportFound: React.FC = () => {
       formData.append('description', description);
       formData.append('storage_location', storageLocation);
       formData.append('contact_email', contactEmail);
-      if (contactPhone && phoneValidation.normalized) {
-        formData.append('contact_phone', phoneValidation.normalized);
-      }
       if (linkedLostItem) formData.append('lost_item_id', linkedLostItem.id);
       if (uploadedFile) formData.append('file', uploadedFile);
 
@@ -287,18 +262,7 @@ export const ReportFound: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">Category</label>
-                <input
-                  type="text"
-                  maxLength={50}
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="Electronics"
-                  className="saas-input w-full py-2 px-3"
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
               <div>
                 <label className="block text-xs font-medium text-zinc-300 mb-1">Brand (Optional)</label>
@@ -473,20 +437,7 @@ export const ReportFound: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1">Indian Mobile Number (Optional)</label>
-              <input
-                type="tel"
-                maxLength={15}
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="9876543210 or +919876543210"
-                className="saas-input w-full py-2 px-3"
-              />
-              <p className="text-[11px] text-zinc-500 mt-1">
-                Enter a 10-digit Indian mobile number starting with 6–9, optionally with +91 prefix.
-              </p>
-            </div>
+
 
             {/* Trust Indicators */}
             <div className="bg-zinc-900 border border-zinc-800 rounded p-3 text-[11px] font-mono text-zinc-400 space-y-1">

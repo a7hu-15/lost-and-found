@@ -11,7 +11,7 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 async def process_and_store_image(file: UploadFile):
     if not file:
-        return None, None
+        return None, None, False, None
 
     ALLOWED_MIMES = {"image/jpeg", "image/png", "image/webp"}
     if file.content_type not in ALLOWED_MIMES:
@@ -77,7 +77,7 @@ async def process_and_store_image(file: UploadFile):
     from app.services.storage import get_storage_backend
     storage = get_storage_backend()
 
-    main_url = await storage.save(f"{now.year}/{now.month:02d}/{main_filename}", main_bytes)
-    thumb_url = await storage.save(f"{now.year}/{now.month:02d}/{thumb_filename}", thumb_bytes)
+    main_url, is_flagged, mod_result = await storage.save(f"{now.year}/{now.month:02d}/{main_filename}", main_bytes)
+    thumb_url, _, _ = await storage.save(f"{now.year}/{now.month:02d}/{thumb_filename}", thumb_bytes)
 
-    return main_url, thumb_url
+    return main_url, thumb_url, is_flagged, mod_result

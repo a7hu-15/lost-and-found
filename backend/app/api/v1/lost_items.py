@@ -14,8 +14,11 @@ from app.models.match import MatchScore
 from app.models.audit import AuditLog
 from app.schemas.lost_item import LostItemCreate, LostItemOut
 from app.matching.engine import calculate_item_similarity
-from app.notifications.service import send_report_confirmation_email
+from app.notifications.service import send_verification_email
 from app.services.image_service import process_and_store_image
+from app.services.moderation.text_moderator import get_text_moderator
+from app.models.verification import VerificationToken, ReportType
+from app.models.lost_item import ModerationStatus
 
 import re
 from datetime import date as date_cls
@@ -28,7 +31,6 @@ router = APIRouter()
 async def create_lost_item(
     request: Request,
     title: str = Form(...),
-    category: str = Form(...),
     location: str = Form(...),
     lost_date: date = Form(...),
     description: str = Form(...),
@@ -36,7 +38,6 @@ async def create_lost_item(
     brand: Optional[str] = Form(None),
     color: Optional[str] = Form(None),
     reward: Optional[float] = Form(0.0),
-    contact_phone: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db)
 ):
@@ -49,8 +50,6 @@ async def create_lost_item(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description exceeds the maximum limit of 100 words.")
     if len(contact_email.strip()) > 254:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email address must not exceed 254 characters.")
-    if category and len(category.strip()) > 50:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category must not exceed 50 characters.")
     if brand and len(brand.strip()) > 50:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Brand must not exceed 50 characters.")
     if color and len(color.strip()) > 50:
@@ -60,57 +59,61 @@ async def create_lost_item(
     if lost_date > date_cls.today():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date lost cannot be in the future.")
 
-    # Server-side validation: Indian mobile number format check
-    if contact_phone and contact_phone.strip():
-        phone_raw = contact_phone.strip()
-        digits = re.sub(r'\D', '', phone_raw)
-        if phone_raw.startswith('+91'):
-            core_digits = digits[2:] if digits.startswith('91') else digits
-        elif len(digits) == 12 and digits.startswith('91'):
-            core_digits = digits[2:]
-        else:
-            core_digits = digits
-
-        if not re.match(r'^[6-9]\d{9}$', core_digits):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Please enter a valid Indian mobile number (10 digits starting with 6–9), or leave the field blank."
-            )
-        contact_phone = f"+91{core_digits}" if phone_raw.startswith('+91') else core_digits
-
     report_id = generate_report_id()
     access_token = generate_access_token()
 
     # Process image if uploaded
     image_url = None
     thumbnail_url = None
+    image_flagged = False
+    image_mod_result = None
     if file and file.filename:
-        image_url, thumbnail_url = await process_and_store_image(file)
+        image_url, thumbnail_url, image_flagged, image_mod_result = await process_and_store_image(file)
 
     # XSS Sanitization
     title = html.escape(title.strip())
     location = html.escape(location.strip())
     description = html.escape(description.strip())
-    category = html.escape(category.strip())
     brand = html.escape(brand.strip()) if brand else None
     color = html.escape(color.strip()) if color else None
+
+    # Text Moderation
+    moderator = get_text_moderator()
+    is_text_flagged, masked_description = moderator.moderate_text(description)
+    is_title_flagged, masked_title = moderator.moderate_text(title)
+    
+    text_flagged = is_text_flagged or is_title_flagged
+    
+    # Calculate ModerationStatus
+    # Starts at PENDING_VERIFICATION until email is verified
+    # Then goes to PENDING_MODERATION (if flagged) or APPROVED (if clean)
+    moderation_status = ModerationStatus.PENDING_VERIFICATION
+    flag_reason = []
+    if text_flagged:
+        flag_reason.append("Text contained profanity.")
+    if image_flagged:
+        flag_reason.append("Image was flagged by moderation API.")
 
     lost_item = LostItem(
         report_id=report_id,
         access_token=access_token,
-        title=title,
-        category=category,
+        title=masked_title,
+        category=None,
         brand=brand,
         color=color,
         location=location,
         lost_date=lost_date,
-        description=description,
+        description=masked_description,
         reward=reward or 0.0,
         image_url=image_url,
         thumbnail_url=thumbnail_url,
         contact_email=contact_email,
-        contact_phone=contact_phone,
-        status=ItemStatus.REPORTED
+        contact_phone=None,
+        status=ItemStatus.REPORTED,
+        moderation_status=moderation_status,
+        text_moderation_result="FLAGGED" if text_flagged else "CLEAN",
+        image_moderation_result=image_mod_result,
+        flag_reason=" | ".join(flag_reason) if flag_reason else None
     )
     db.add(lost_item)
     await db.flush()
@@ -153,15 +156,22 @@ async def create_lost_item(
     )
     db.add(audit)
     
+    # Create verification token
+    v_token = VerificationToken(
+        email=lost_item.contact_email,
+        report_id=lost_item.report_id,
+        report_type=ReportType.LOST
+    )
+    db.add(v_token)
+    
     await db.commit()
     await db.refresh(lost_item)
     
-    # Confirmation notification email
-    send_report_confirmation_email(
+    # Verification email
+    send_verification_email(
         email=lost_item.contact_email,
-        report_id=lost_item.report_id,
-        access_token=lost_item.access_token,
-        item_title=lost_item.title
+        token=v_token.token,
+        report_id=lost_item.report_id
     )
     
     return lost_item
@@ -173,7 +183,10 @@ async def list_lost_items(
     status: Optional[ItemStatus] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN).order_by(LostItem.created_at.desc())
+    query = select(LostItem).where(
+        LostItem.status != ItemStatus.HIDDEN,
+        LostItem.moderation_status == ModerationStatus.APPROVED
+    ).order_by(LostItem.created_at.desc())
     if category:
         query = query.where(LostItem.category.ilike(f"%{category}%"))
     if location:
@@ -196,7 +209,6 @@ async def get_lost_item(item_id: str, db: AsyncSession = Depends(get_db)):
 
 from app.models.item_information import LostItemInformation
 from app.schemas.item_information import ItemInformationCreate, ItemInformationOut
-from app.notifications.service import send_information_submitted_platform_email
 
 @router.post("/{report_id}/information", response_model=ItemInformationOut, status_code=status.HTTP_201_CREATED)
 @limiter.limit(LIMIT_CREATE)
@@ -222,16 +234,5 @@ async def submit_item_information(
     db.add(info)
     await db.commit()
     await db.refresh(info)
-
-    # Dispatch email to platform
-    sender_details = f"{payload.sender_name or 'Anonymous'} ({payload.sender_email or 'No email'})"
-    send_information_submitted_platform_email(
-        report_id=lost_item.report_id,
-        item_title=lost_item.title,
-        location=lost_item.location,
-        lost_date=str(lost_item.lost_date),
-        message=payload.message,
-        sender_info=sender_details
-    )
 
     return info

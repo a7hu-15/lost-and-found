@@ -5,12 +5,13 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from abc import ABC, abstractmethod
+from typing import Tuple
 from app.core.config import settings
 
 class StorageBackend(ABC):
     @abstractmethod
-    async def save(self, filepath: str, data: bytes) -> str:
-        """Saves data to a relative filepath and returns the public URL."""
+    async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
+        """Saves data and returns (public_url, is_flagged, moderation_result)."""
         pass
 
 class LocalStorage(StorageBackend):
@@ -19,12 +20,12 @@ class LocalStorage(StorageBackend):
         self.base_url = base_url
         os.makedirs(self.base_dir, exist_ok=True)
 
-    async def save(self, filepath: str, data: bytes) -> str:
+    async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
         full_path = os.path.join(self.base_dir, filepath)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         async with aiofiles.open(full_path, 'wb') as f:
             await f.write(data)
-        return f"{self.base_url}/{filepath}"
+        return f"{self.base_url}/{filepath}", False, "NOT_APPLICABLE"
 
 class CloudinaryStorage(StorageBackend):
     """
@@ -52,15 +53,29 @@ class CloudinaryStorage(StorageBackend):
         
         loop = asyncio.get_event_loop()
         def _upload():
+            # Apply moderation (defaulting to aws_rek per standard Cloudinary setup)
             response = cloudinary.uploader.upload(
                 data,
                 public_id=filepath.split('.')[0], # Cloudinary doesn't need the extension
-                resource_type="image"
+                resource_type="image",
+                moderation="aws_rek"
             )
-            return response.get("secure_url")
+            # Example response structure for aws_rek moderation:
+            # {"moderation": [{"status": "approved" | "rejected" | "pending", "kind": "aws_rek", ...}]}
+            is_flagged = False
+            moderation_status = "APPROVED"
             
-        secure_url = await loop.run_in_executor(None, _upload)
-        return secure_url
+            mod_data = response.get("moderation", [])
+            if mod_data and isinstance(mod_data, list):
+                status = mod_data[0].get("status", "").lower()
+                if status in ["rejected", "pending"]:
+                    is_flagged = True
+                    moderation_status = status.upper()
+
+            return response.get("secure_url"), is_flagged, moderation_status
+            
+        secure_url, is_flagged, moderation_status = await loop.run_in_executor(None, _upload)
+        return secure_url, is_flagged, moderation_status
 
 def get_storage_backend() -> StorageBackend:
     if getattr(settings, "USE_CLOUD_STORAGE", False):

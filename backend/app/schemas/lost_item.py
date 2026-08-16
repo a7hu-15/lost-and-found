@@ -32,7 +32,6 @@ def validate_description_words(v: str) -> str:
 
 class LostItemCreate(BaseModel):
     title: str
-    category: str
     brand: Optional[str] = None
     color: Optional[str] = None
     location: str
@@ -41,7 +40,6 @@ class LostItemCreate(BaseModel):
     reward: Optional[float] = 0.0
     image_url: Optional[str] = None
     contact_email: EmailStr
-    contact_phone: Optional[str] = None
 
     @field_validator('title')
     @classmethod
@@ -57,11 +55,11 @@ class LostItemCreate(BaseModel):
             raise ValueError("Location must not exceed 200 characters.")
         return v
 
-    @field_validator('category', 'brand', 'color')
+    @field_validator('brand', 'color')
     @classmethod
     def validate_short_attr_len(cls, v: Optional[str]) -> Optional[str]:
         if v and len(v.strip()) > 50:
-            raise ValueError("Category, brand, and color must not exceed 50 characters each.")
+            raise ValueError("Brand and color must not exceed 50 characters each.")
         return v
 
     @field_validator('contact_email')
@@ -83,17 +81,13 @@ class LostItemCreate(BaseModel):
             raise ValueError("Date lost cannot be in the future.")
         return v
 
-    @field_validator('contact_phone')
-    @classmethod
-    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
-        return validate_indian_mobile(v)
+
 
 class LostItemOut(BaseModel):
     id: str
     report_id: str
     access_token: str
     title: str
-    category: str
     brand: Optional[str]
     color: Optional[str]
     location: str
@@ -107,3 +101,14 @@ class LostItemOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+from app.models.lost_item import ModerationStatus
+
+class AdminLostItemOut(LostItemOut):
+    contact_email: str
+    moderation_status: ModerationStatus
+    text_moderation_result: Optional[str]
+    image_moderation_result: Optional[str]
+    flag_reason: Optional[str]
+    reviewed_at: Optional[datetime]
+    reviewed_by: Optional[str]

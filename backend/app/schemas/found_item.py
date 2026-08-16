@@ -7,7 +7,6 @@ from app.schemas.lost_item import validate_indian_mobile, validate_description_w
 
 class FoundItemCreate(BaseModel):
     title: str
-    category: str
     brand: Optional[str] = None
     color: Optional[str] = None
     location: str
@@ -16,7 +15,6 @@ class FoundItemCreate(BaseModel):
     storage_location: str = "Campus Security Office - Gate 1"
     image_url: Optional[str] = None
     contact_email: EmailStr
-    contact_phone: Optional[str] = None
 
     @field_validator('title')
     @classmethod
@@ -32,11 +30,11 @@ class FoundItemCreate(BaseModel):
             raise ValueError("Location must not exceed 200 characters.")
         return v
 
-    @field_validator('category', 'brand', 'color')
+    @field_validator('brand', 'color')
     @classmethod
     def validate_short_attr_len(cls, v: Optional[str]) -> Optional[str]:
         if v and len(v.strip()) > 50:
-            raise ValueError("Category, brand, and color must not exceed 50 characters each.")
+            raise ValueError("Brand and color must not exceed 50 characters each.")
         return v
 
     @field_validator('contact_email')
@@ -58,17 +56,13 @@ class FoundItemCreate(BaseModel):
             raise ValueError("Date found cannot be in the future.")
         return v
 
-    @field_validator('contact_phone')
-    @classmethod
-    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
-        return validate_indian_mobile(v)
+
 
 class FoundItemOut(BaseModel):
     id: str
     report_id: str
     access_token: str
     title: str
-    category: str
     brand: Optional[str]
     color: Optional[str]
     location: str
@@ -82,3 +76,14 @@ class FoundItemOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+from app.models.lost_item import ModerationStatus
+
+class AdminFoundItemOut(FoundItemOut):
+    contact_email: str
+    moderation_status: ModerationStatus
+    text_moderation_result: Optional[str]
+    image_moderation_result: Optional[str]
+    flag_reason: Optional[str]
+    reviewed_at: Optional[datetime]
+    reviewed_by: Optional[str]

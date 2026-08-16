@@ -1,26 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, FileText, MessageSquare } from 'lucide-react';
 import api from '../services/api';
-import { Claim, DashboardStats, ItemInformation } from '../types';
+import { Claim, DashboardStats, ItemInformation, LostItem, FoundItem, ModerationStatus } from '../types';
 
 export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [tips, setTips] = useState<ItemInformation[]>([]);
+  const [flaggedLost, setFlaggedLost] = useState<LostItem[]>([]);
+  const [flaggedFound, setFlaggedFound] = useState<FoundItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState('');
 
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [statsRes, claimsRes, tipsRes] = await Promise.all([
+      const [statsRes, claimsRes, tipsRes, lostRes, foundRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/claims/all'),
-        api.get('/admin/information?status=PENDING')
+        api.get('/admin/information?status=PENDING'),
+        api.get('/admin/lost-items?moderation_status=PENDING_MODERATION'),
+        api.get('/admin/found-items?moderation_status=PENDING_MODERATION')
       ]);
       setStats(statsRes.data);
       setClaims(claimsRes.data);
       setTips(tipsRes.data);
+      setFlaggedLost(lostRes.data);
+      setFlaggedFound(foundRes.data);
     } catch (err) {
       console.error('Failed to fetch admin data', err);
     } finally {
@@ -54,6 +60,20 @@ export const AdminDashboard: React.FC = () => {
       setTimeout(() => setActionMessage(''), 4000);
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to review tip.');
+    }
+  };
+
+  const handleModerateItem = async (itemId: string, itemType: 'LOST' | 'FOUND', status: ModerationStatus) => {
+    try {
+      await api.patch(`/admin/${itemType.toLowerCase()}-items/${itemId}/moderation`, {
+        moderation_status: status,
+        admin_notes: `Reviewed by Security Staff`
+      });
+      setActionMessage(`${itemType} Item ${status}`);
+      fetchAdminData();
+      setTimeout(() => setActionMessage(''), 4000);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || `Failed to moderate ${itemType.toLowerCase()} item.`);
     }
   };
 
@@ -240,6 +260,111 @@ export const AdminDashboard: React.FC = () => {
                     className="saas-button-primary text-xs py-1.5 px-4 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500"
                   >
                     <CheckCircle className="w-3.5 h-3.5" /> Approve & Notify Owner
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Moderation Queue for Lost Items */}
+      <div className="space-y-4 pt-6 border-t border-zinc-800">
+        <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <h2 className="text-base font-semibold text-white tracking-tight">
+            Flagged Lost Items Queue ({flaggedLost.length})
+          </h2>
+        </div>
+        {loading ? (
+          <div className="saas-card p-8 text-center text-xs font-mono text-zinc-500">Loading flagged lost items...</div>
+        ) : flaggedLost.length === 0 ? (
+          <div className="saas-card p-6 text-center text-xs font-mono text-zinc-500">No flagged lost items.</div>
+        ) : (
+          <div className="space-y-4">
+            {flaggedLost.map((item) => (
+              <div key={item.id} className="saas-card p-5 space-y-4 border-l-4 border-l-amber-500">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase">Lost Item | {item.report_id}</span>
+                    <div className="text-sm font-semibold text-white">{item.title}</div>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase bg-amber-950/40 text-amber-300 border-amber-900/60">
+                    {item.moderation_status}
+                  </span>
+                </div>
+                <div className="bg-amber-950/20 p-4 rounded border border-amber-900/30 text-xs space-y-2 font-mono">
+                  <div>
+                    <span className="text-amber-500/70 block text-[10px] uppercase">Flag Reason:</span>
+                    <span className="text-amber-200">{item.flag_reason || 'Unknown'}</span>
+                  </div>
+                  <div>
+                    <span className="text-amber-500/70 block text-[10px] uppercase">Description:</span>
+                    <p className="text-zinc-300 font-sans mt-0.5 whitespace-pre-wrap">{item.description}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => handleModerateItem(item.id, 'LOST', 'REJECTED')} className="saas-button-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 hover:text-rose-400">
+                    <XCircle className="w-3.5 h-3.5" /> Reject Report
+                  </button>
+                  <button onClick={() => handleModerateItem(item.id, 'LOST', 'APPROVED')} className="saas-button-primary text-xs py-1.5 px-4 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500">
+                    <CheckCircle className="w-3.5 h-3.5" /> Approve & Publish
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Moderation Queue for Found Items */}
+      <div className="space-y-4 pt-6 border-t border-zinc-800">
+        <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <h2 className="text-base font-semibold text-white tracking-tight">
+            Flagged Found Items Queue ({flaggedFound.length})
+          </h2>
+        </div>
+        {loading ? (
+          <div className="saas-card p-8 text-center text-xs font-mono text-zinc-500">Loading flagged found items...</div>
+        ) : flaggedFound.length === 0 ? (
+          <div className="saas-card p-6 text-center text-xs font-mono text-zinc-500">No flagged found items.</div>
+        ) : (
+          <div className="space-y-4">
+            {flaggedFound.map((item) => (
+              <div key={item.id} className="saas-card p-5 space-y-4 border-l-4 border-l-amber-500">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase">Found Item | {item.report_id}</span>
+                    <div className="text-sm font-semibold text-white">{item.title}</div>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase bg-amber-950/40 text-amber-300 border-amber-900/60">
+                    {item.moderation_status}
+                  </span>
+                </div>
+                <div className="bg-amber-950/20 p-4 rounded border border-amber-900/30 text-xs space-y-2 font-mono flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <span className="text-amber-500/70 block text-[10px] uppercase">Flag Reason:</span>
+                      <span className="text-amber-200">{item.flag_reason || 'Unknown'}</span>
+                    </div>
+                    <div>
+                      <span className="text-amber-500/70 block text-[10px] uppercase">Description:</span>
+                      <p className="text-zinc-300 font-sans mt-0.5 whitespace-pre-wrap">{item.description}</p>
+                    </div>
+                  </div>
+                  {item.thumbnail_url && (
+                    <div className="w-24 h-24 shrink-0 rounded border border-amber-900/30 overflow-hidden bg-black/50">
+                      <img src={item.thumbnail_url} alt="Flagged" className="w-full h-full object-cover opacity-75 hover:opacity-100 transition-opacity" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => handleModerateItem(item.id, 'FOUND', 'REJECTED')} className="saas-button-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 hover:text-rose-400">
+                    <XCircle className="w-3.5 h-3.5" /> Reject Report
+                  </button>
+                  <button onClick={() => handleModerateItem(item.id, 'FOUND', 'APPROVED')} className="saas-button-primary text-xs py-1.5 px-4 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500">
+                    <CheckCircle className="w-3.5 h-3.5" /> Approve & Publish
                   </button>
                 </div>
               </div>

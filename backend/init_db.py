@@ -5,7 +5,7 @@ import app.models
 
 import os
 from sqlalchemy.orm import sessionmaker
-from app.core.security import get_password_hash
+from app.security.passwords import get_password_hash
 
 async def init_db():
     async with engine.begin() as conn:

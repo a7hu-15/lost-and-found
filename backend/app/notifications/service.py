@@ -2,8 +2,8 @@ import logging
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import smtplib
 import inspect
-import httpx
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -32,109 +32,122 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
     logger.info(f"BODY:\n{body_text}")
     logger.info(f"=====================================")
 
-    if settings.MOCK_SMTP:
+    if getattr(settings, "MOCK_SMTP", False):
         logger.info(f"MOCK SMTP ENABLED: Bypassed physical email dispatch to {to_email}")
         return
 
-    if settings.SMTP_USER and settings.SMTP_PASSWORD:
-        try:
-            import smtplib
-            from email.mime.text import MIMEText
-            from email.mime.multipart import MIMEMultipart
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = settings.SMTP_FROM
+        msg["To"] = to_email
 
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = settings.SMTP_FROM
-            msg["To"] = to_email
+        if body_text:
+            msg.attach(MIMEText(body_text, "plain"))
+        if body_html:
+            msg.attach(MIMEText(body_html, "html"))
 
-            if body_html:
-                part1 = MIMEText(body_text, "plain")
-                part2 = MIMEText(body_html, "html")
-                msg.attach(part1)
-                msg.attach(part2)
-            else:
-                msg.attach(MIMEText(body_text, "plain"))
-
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.send_message(msg)
-
-            logger.info(f"Email sent successfully via SMTP to {to_email}")
-            return
-        except Exception as e:
-            logger.error(f"Failed to send email via SMTP to {to_email}: {str(e)}")
-            return
-
-    return
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.starttls()
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            server.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
+        
+        logger.info(f"Email sent successfully via SMTP to {to_email}")
+    except Exception as e:
+        logger.error(f"Failed to send email via SMTP to {to_email}: {str(e)}")
 
 
 def send_report_confirmation_email(email: str, report_id: str, access_token: str, item_title: str):
-    tracking_url = f"http://localhost:5173/track?report_id={report_id}&token={access_token}"
-    subject = f"Lost & Found • Your Report Has Been Created ({report_id})"
+    front_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    tracking_url = f"{front_url}/track?report_id={report_id}&token={access_token}"
+    subject = f"Lost & Found • Your Report Has Been Submitted ({report_id})"
     
     text_content = f"""Hello,
 
-Your report has been successfully created on the Campus Lost & Found Platform.
+Your Lost & Found report has been successfully submitted.
 
-----------------------------------------
 Report ID: {report_id}
-Item Title: {item_title}
-Status: Searching
-----------------------------------------
+Item: {item_title}
 
+Thank you for using Cloud Lost & Found.
 Track Your Report Online:
 {tracking_url}
-
-----------------------------------------
-Please keep this email for your records.
-If you forget your Report ID, simply search your inbox for "Lost & Found" or "{report_id[:8]}" to recover it.
-
-Thank you,
-SRM Campus Security & Lost & Found Team
 """
 
     html_content = f"""
     <!DOCTYPE html>
     <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
-        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
-        .header {{ font-size: 18px; font-weight: 700; color: #09090b; margin-bottom: 4px; }}
-        .subtitle {{ font-size: 13px; color: #71717a; margin-bottom: 24px; }}
-        .badge-box {{ background-color: #09090b; color: #ffffff; padding: 16px 20px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 24px; }}
-        .badge-label {{ font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }}
-        .badge-id {{ font-size: 20px; font-weight: 700; color: #ffffff; margin-top: 2px; }}
-        .badge-detail {{ font-size: 12px; color: #d4d4d8; margin-top: 6px; font-family: sans-serif; }}
-        .btn {{ background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block; }}
-        .footer {{ font-size: 12px; color: #a1a1aa; border-top: 1px solid #e4e4e7; pt: 20px; margin-top: 28px; line-height: 1.5; }}
-      </style>
-    </head>
     <body>
-      <div class="container">
-        <div class="header">Lost &amp; Found Report Created</div>
-        <div class="subtitle">Your item report has been logged to the campus database.</div>
-
-        <div class="badge-box">
-          <div class="badge-label">Unique Report ID</div>
-          <div class="badge-id">{report_id}</div>
-          <div class="badge-detail">Item: {item_title} &bull; Status: Searching</div>
-        </div>
-
-        <div style="margin-bottom: 24px;">
-          <a href="{tracking_url}" class="btn">Track My Report &rarr;</a>
-        </div>
-
-        <div class="footer">
-          Please keep this email receipt. If you ever forget your Report ID, simply search your inbox for <strong>Lost &amp; Found</strong> or <strong>{report_id[:9]}</strong> to recover your status link.
-        </div>
-      </div>
+        <h2>Report Submitted Successfully</h2>
+        <p>Your Lost & Found report has been successfully submitted.</p>
+        <ul>
+            <li><strong>Report ID:</strong> {report_id}</li>
+            <li><strong>Item:</strong> {item_title}</li>
+        </ul>
+        <a href="{tracking_url}">Track Your Report</a>
     </body>
     </html>
     """
 
     send_email(email, subject, text_content, html_content)
+
+
+def send_verification_email(email: str, token: str, report_id: str):
+    front_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    verification_url = f"{front_url}/verify-email?token={token}"
+    subject = "Lost & Found • Verify Your Email"
+    
+    text_content = f"""Hello,
+
+Please verify your email address to complete the submission of your report ({report_id}).
+
+Verify here:
+{verification_url}
+
+If you did not request this, please ignore this email.
+"""
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <body>
+        <h2>Verify Your Email</h2>
+        <p>Please verify your email address to complete your Lost & Found report ({report_id}).</p>
+        <a href="{verification_url}">Verify Email Address</a>
+        <p>If you did not request this, please ignore this email.</p>
+    </body>
+    </html>
+    """
+
+    send_email(email, subject, text_content, html_content)
+
+def send_report_approved_email(email: str, report_id: str, item_title: str):
+    subject = f"Lost & Found • Your Report Has Been Approved ({report_id})"
+    
+    text_content = f"""Hello,
+
+Your Lost & Found report has been approved and is now visible on the platform.
+
+Report ID: {report_id}
+Item: {item_title}
+
+Thank you for using Cloud Lost & Found.
+"""
+    send_email(email, subject, text_content)
+
+def send_report_rejected_email(email: str, report_id: str, item_title: str):
+    subject = f"Lost & Found • Your Report Has Been Rejected ({report_id})"
+    
+    text_content = f"""Hello,
+
+Your Lost & Found report could not be approved and has been removed from the platform.
+
+Report ID: {report_id}
+Item: {item_title}
+
+If you believe this is a mistake, please contact campus security.
+"""
+    send_email(email, subject, text_content)
 
 
 def send_claim_approved_email(email: str, report_id: str, storage_location: str):
@@ -269,58 +282,7 @@ Campus Administration Security
 
     send_email(email, subject, text_content, html_content)
 
-def send_information_submitted_platform_email(report_id: str, item_title: str, location: str, lost_date: str, message: str, sender_info: str):
-    subject = f"New Information Submitted — Lost Item [{report_id}]"
-    
-    text_content = f"""New Information Submitted — Lost Item
 
-Lost Report: {report_id}
-Item: {item_title}
-Location: {location}
-Lost Date: {lost_date}
-
-Message from visitor:
-{message}
-
-Submitted by:
-{sender_info}
-
-Please log in to the admin dashboard to review this information.
-"""
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body {{ font-family: sans-serif; background-color: #f4f4f5; margin: 0; padding: 24px; }}
-        .container {{ max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 8px; padding: 32px; }}
-        .header {{ font-size: 18px; font-weight: bold; margin-bottom: 16px; }}
-        .info-box {{ background: #f4f4f5; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; margin-bottom: 16px; }}
-        .message-box {{ font-size: 14px; line-height: 1.6; padding: 16px; border-left: 4px solid #2563eb; background: #eff6ff; margin-bottom: 16px; white-space: pre-wrap; }}
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">New Information Submitted</div>
-        <div class="info-box">
-          <strong>Report:</strong> {report_id}<br/>
-          <strong>Item:</strong> {item_title}<br/>
-          <strong>Location:</strong> {location}<br/>
-          <strong>Lost Date:</strong> {lost_date}
-        </div>
-        <div class="message-box">{message}</div>
-        <div style="font-size: 12px; color: #71717a; margin-bottom: 16px;">
-          <strong>Submitted by:</strong> {sender_info}
-        </div>
-        <p style="font-size: 13px; color: #52525b;">Please review this information in the admin dashboard.</p>
-      </div>
-    </body>
-    </html>
-    """
-
-    send_email(settings.SUPPORT_EMAIL, subject, text_content, html_content)
 
 
 def send_information_approved_owner_email(email: str, message: str, report_id: str):

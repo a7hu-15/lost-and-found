@@ -16,12 +16,14 @@ from app.models.audit import AuditLog
 from app.schemas.admin import (
     AuditLogOut, DashboardStats, UserRoleUpdate, UserStatusUpdate,
     ItemStatusUpdate, AdminAnalyticsTrend, TrendDataPoint,
-    StaffInviteRequest, StaffPermissionsUpdate, StaffStatusUpdate, StaffMemberOut
+    StaffInviteRequest, StaffPermissionsUpdate, StaffStatusUpdate, StaffMemberOut,
+    ModerationUpdate
 )
 from app.schemas.auth import UserOut
 from app.schemas.support import SupportTicketOut, SupportTicketStatusUpdate
-from app.schemas.lost_item import LostItemOut
-from app.schemas.found_item import FoundItemOut
+from app.schemas.lost_item import LostItemOut, AdminLostItemOut
+from app.schemas.found_item import FoundItemOut, AdminFoundItemOut
+from app.models.lost_item import ModerationStatus
 from app.schemas.item_information import ItemInformationOut, ItemInformationReview
 from app.models.item_information import LostItemInformation, TipStatus
 from app.notifications.service import send_information_approved_owner_email
@@ -264,12 +266,16 @@ async def update_user_status(
 
 # --- Lost Items Management ---
 
-@router.get("/lost-items", response_model=List[LostItemOut])
+@router.get("/lost-items", response_model=List[AdminLostItemOut])
 async def list_all_lost_items(
+    moderation_status: Optional[ModerationStatus] = None,
     current_user: User = Depends(require_permission("view_lost_items")),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(LostItem).order_by(LostItem.created_at.desc()))
+    query = select(LostItem).order_by(LostItem.created_at.desc())
+    if moderation_status:
+        query = query.where(LostItem.moderation_status == moderation_status)
+    result = await db.execute(query)
     return result.scalars().all()
 
 @router.patch("/lost-items/{item_id}/status", response_model=LostItemOut)
@@ -304,14 +310,58 @@ async def update_lost_item_status(
     await db.refresh(item)
     return item
 
+@router.patch("/lost-items/{item_id}/moderation", response_model=AdminLostItemOut)
+async def update_lost_item_moderation(
+    item_id: str,
+    status_in: ModerationUpdate,
+    current_user: User = Depends(require_permission("moderate_lost_items")),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(LostItem).where(LostItem.id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Lost item report not found.")
+
+    old_status = item.moderation_status.value if hasattr(item.moderation_status, 'value') else str(item.moderation_status)
+    item.moderation_status = status_in.moderation_status
+    item.reviewed_at = datetime.utcnow()
+    item.reviewed_by = current_user.id
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action=f"ADMIN_MODERATE_LOST_ITEM_{status_in.moderation_status.value}",
+        resource="lost_items",
+        details={
+            "report_id": item.report_id,
+            "old_mod_status": old_status,
+            "new_mod_status": status_in.moderation_status.value,
+            "notes": status_in.admin_notes or ""
+        }
+    )
+    db.add(audit)
+    await db.commit()
+    await db.refresh(item)
+    
+    from app.notifications.service import send_report_approved_email, send_report_rejected_email
+    if item.moderation_status == ModerationStatus.APPROVED:
+        send_report_approved_email(item.contact_email, item.report_id, item.title)
+    elif item.moderation_status == ModerationStatus.REJECTED:
+        send_report_rejected_email(item.contact_email, item.report_id, item.title)
+
+    return item
+
 # --- Found Items Management ---
 
-@router.get("/found-items", response_model=List[FoundItemOut])
+@router.get("/found-items", response_model=List[AdminFoundItemOut])
 async def list_all_found_items(
+    moderation_status: Optional[ModerationStatus] = None,
     current_user: User = Depends(require_permission("view_found_items")),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(FoundItem).order_by(FoundItem.created_at.desc()))
+    query = select(FoundItem).order_by(FoundItem.created_at.desc())
+    if moderation_status:
+        query = query.where(FoundItem.moderation_status == moderation_status)
+    result = await db.execute(query)
     return result.scalars().all()
 
 @router.patch("/found-items/{item_id}/status", response_model=FoundItemOut)
@@ -344,6 +394,46 @@ async def update_found_item_status(
     db.add(audit)
     await db.commit()
     await db.refresh(item)
+    return item
+
+@router.patch("/found-items/{item_id}/moderation", response_model=AdminFoundItemOut)
+async def update_found_item_moderation(
+    item_id: str,
+    status_in: ModerationUpdate,
+    current_user: User = Depends(require_permission("moderate_found_items")),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(FoundItem).where(FoundItem.id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Found item report not found.")
+
+    old_status = item.moderation_status.value if hasattr(item.moderation_status, 'value') else str(item.moderation_status)
+    item.moderation_status = status_in.moderation_status
+    item.reviewed_at = datetime.utcnow()
+    item.reviewed_by = current_user.id
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action=f"ADMIN_MODERATE_FOUND_ITEM_{status_in.moderation_status.value}",
+        resource="found_items",
+        details={
+            "report_id": item.report_id,
+            "old_mod_status": old_status,
+            "new_mod_status": status_in.moderation_status.value,
+            "notes": status_in.admin_notes or ""
+        }
+    )
+    db.add(audit)
+    await db.commit()
+    await db.refresh(item)
+    
+    from app.notifications.service import send_report_approved_email, send_report_rejected_email
+    if item.moderation_status == ModerationStatus.APPROVED:
+        send_report_approved_email(item.contact_email, item.report_id, item.title)
+    elif item.moderation_status == ModerationStatus.REJECTED:
+        send_report_rejected_email(item.contact_email, item.report_id, item.title)
+
     return item
 
 # --- Support Tickets Management ---
