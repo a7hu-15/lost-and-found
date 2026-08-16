@@ -5,9 +5,13 @@ import traceback
 # Add the 'backend' directory to sys.path so 'app' can be imported
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+# Define app at module level so Vercel AST parser finds it
+app = FastAPI()
+
 try:
-    from fastapi import FastAPI, Request
-    from fastapi.responses import JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.staticfiles import StaticFiles
     from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -23,13 +27,9 @@ try:
     from app.core.rate_limit import limiter
     import logging
 
-    app = FastAPI(
-        title=settings.PROJECT_NAME,
-        version=settings.VERSION,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        docs_url="/docs",
-        redoc_url="/redoc"
-    )
+    app.title = settings.PROJECT_NAME
+    app.version = settings.VERSION
+    app.openapi_url = f"{settings.API_V1_STR}/openapi.json"
 
     logger = logging.getLogger(__name__)
 
@@ -68,11 +68,7 @@ try:
             "version": settings.VERSION
         }
 except Exception as e:
-    from fastapi import FastAPI, Request
-    from fastapi.responses import JSONResponse
     err = traceback.format_exc()
-    
-    app = FastAPI()
     
     @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"])
     async def catch_all(request: Request, path: str):
