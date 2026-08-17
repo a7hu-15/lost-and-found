@@ -87,9 +87,8 @@ async def create_lost_item(
     text_flagged = is_text_flagged or is_item_name_flagged or is_location_flagged
     
     # Calculate ModerationStatus
-    # Starts at PENDING_VERIFICATION until email is verified
-    # Then goes to PENDING_MODERATION (if flagged) or APPROVED (if clean)
-    moderation_status = ModerationStatus.PENDING_VERIFICATION
+    # Auto-approving clean items for demo so they appear in search immediately
+    moderation_status = ModerationStatus.PENDING_MODERATION if (text_flagged or image_flagged) else ModerationStatus.APPROVED
     flag_reason = []
     if text_flagged:
         flag_reason.append("Text contained profanity.")
@@ -119,7 +118,8 @@ async def create_lost_item(
         moderation_status=moderation_status,
         
         image_moderation_result=image_mod_result,
-        flag_reason=" | ".join(flag_reason) if flag_reason else None
+        flag_reason=" | ".join(flag_reason) if flag_reason else None,
+        verification_status=True
     )
     db.add(lost_item)
     await db.flush()
