@@ -48,6 +48,10 @@ graph TD
 
 ## Local Development Setup
 
+### Note on Image Uploads
+> [!NOTE]
+> This platform uses Cloudinary's AWS Rekognition add-on for automated image moderation, which is limited to 50 operations per month on the free tier. If you encounter an error when uploading an image (e.g., the platform is unable to proceed), it means the monthly quota has been reached. In this case, you can simply proceed with submitting your report without uploading an image.
+
 ### Backend
 ```bash
 cd backend
