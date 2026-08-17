@@ -94,7 +94,7 @@ export const Support: React.FC = () => {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Ashutosh Chaudhary"
+              placeholder="e.g. John Doe"
               className="saas-input w-full py-2 px-3 text-xs"
             />
           </div>
