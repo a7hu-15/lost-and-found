@@ -81,7 +81,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
         {/* Main Large Image */}
         {item.image_url ? (
           <div className="w-full h-64 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
-            <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover" />
+            <img src={item.image_url} alt={item.item_name} className="w-full h-full object-contain" />
           </div>
         ) : (
           <div className="w-full h-32 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 font-mono text-xs gap-1.5 font-medium">

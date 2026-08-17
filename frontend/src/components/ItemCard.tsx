@@ -41,7 +41,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, type, onViewDetails })
             <img
               src={item.thumbnail_url || item.image_url}
               alt={item.item_name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
             />
           </div>
         ) : (

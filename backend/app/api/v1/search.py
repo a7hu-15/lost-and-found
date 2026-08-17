@@ -35,15 +35,17 @@ async def search_items(
     else:
         lost_query = select(LostItem).where(LostItem.status != ItemStatus.HIDDEN, LostItem.moderation_status == ModerationStatus.APPROVED)
         if q:
-            lost_query = lost_query.where(
-                or_(
-                    LostItem.item_name.ilike(f"%{q}%"),
-                    LostItem.description.ilike(f"%{q}%"),
-                    LostItem.brand.ilike(f"%{q}%"),
-                    LostItem.color.ilike(f"%{q}%"),
-                    LostItem.location.ilike(f"%{q}%"),
+            keywords = [k.strip() for k in q.split() if k.strip()]
+            for kw in keywords:
+                lost_query = lost_query.where(
+                    or_(
+                        LostItem.item_name.ilike(f"%{kw}%"),
+                        LostItem.description.ilike(f"%{kw}%"),
+                        LostItem.brand.ilike(f"%{kw}%"),
+                        LostItem.color.ilike(f"%{kw}%"),
+                        LostItem.location.ilike(f"%{kw}%"),
+                    )
                 )
-            )
         if location:
             lost_query = lost_query.where(LostItem.location.ilike(f"%{location}%"))
         if color:
@@ -58,15 +60,17 @@ async def search_items(
     else:
         found_query = select(FoundItem).where(FoundItem.status != ItemStatus.HIDDEN, FoundItem.moderation_status == ModerationStatus.APPROVED)
         if q:
-            found_query = found_query.where(
-                or_(
-                    FoundItem.item_name.ilike(f"%{q}%"),
-                    FoundItem.description.ilike(f"%{q}%"),
-                    FoundItem.brand.ilike(f"%{q}%"),
-                    FoundItem.color.ilike(f"%{q}%"),
-                    FoundItem.location.ilike(f"%{q}%"),
+            keywords = [k.strip() for k in q.split() if k.strip()]
+            for kw in keywords:
+                found_query = found_query.where(
+                    or_(
+                        FoundItem.item_name.ilike(f"%{kw}%"),
+                        FoundItem.description.ilike(f"%{kw}%"),
+                        FoundItem.brand.ilike(f"%{kw}%"),
+                        FoundItem.color.ilike(f"%{kw}%"),
+                        FoundItem.location.ilike(f"%{kw}%"),
+                    )
                 )
-            )
         if location:
             found_query = found_query.where(FoundItem.location.ilike(f"%{location}%"))
         if color:

@@ -81,26 +81,29 @@ class CloudinaryStorage(StorageBackend):
         
         loop = asyncio.get_event_loop()
         def _upload():
-            # Apply moderation (defaulting to aws_rek per standard Cloudinary setup)
-            response = cloudinary.uploader.upload(
-                data,
-                public_id=filepath.split('.')[0], # Cloudinary doesn't need the extension
-                resource_type="image",
-                moderation="aws_rek"
-            )
-            # Example response structure for aws_rek moderation:
-            # {"moderation": [{"status": "approved" | "rejected" | "pending", "kind": "aws_rek", ...}]}
-            is_flagged = False
-            moderation_status = "APPROVED"
-            
-            mod_data = response.get("moderation", [])
-            if mod_data and isinstance(mod_data, list):
-                status = mod_data[0].get("status", "").lower()
-                if status in ["rejected", "pending"]:
-                    is_flagged = True
-                    moderation_status = status.upper()
+            try:
+                # Apply moderation (defaulting to aws_rek per standard Cloudinary setup)
+                response = cloudinary.uploader.upload(
+                    data,
+                    public_id=filepath.split('.')[0], # Cloudinary doesn't need the extension
+                    resource_type="image",
+                    moderation="aws_rek"
+                )
+                # Example response structure for aws_rek moderation:
+                # {"moderation": [{"status": "approved" | "rejected" | "pending", "kind": "aws_rek", ...}]}
+                is_flagged = False
+                moderation_status = "APPROVED"
+                
+                mod_data = response.get("moderation", [])
+                if mod_data and isinstance(mod_data, list):
+                    status = mod_data[0].get("status", "").lower()
+                    if status in ["rejected", "pending"]:
+                        is_flagged = True
+                        moderation_status = status.upper()
 
-            return response.get("secure_url"), is_flagged, moderation_status
+                return response.get("secure_url"), is_flagged, moderation_status
+            except Exception as e:
+                raise ValueError(f"Cloudinary upload failed: {str(e)}")
             
         secure_url, is_flagged, moderation_status = await loop.run_in_executor(None, _upload)
         return secure_url, is_flagged, moderation_status

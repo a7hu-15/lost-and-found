@@ -31,12 +31,12 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         
         {/* Master LF Logo & Brand Lockup */}
-        <Link to="/" className="group">
+        <Link to="/" className="group shrink-0 mr-4">
           <Logo variant={isLight ? 'light' : 'dark'} />
         </Link>
 
         {/* Primary Nav Links */}
-        <nav className="flex items-center gap-1 text-xs font-sans">
+        <nav className="flex items-center gap-1 text-xs font-sans overflow-x-auto whitespace-nowrap hide-scrollbar flex-nowrap pr-2 w-full">
           <Link
             to="/"
             className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
