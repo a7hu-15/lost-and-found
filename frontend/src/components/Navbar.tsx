@@ -36,7 +36,7 @@ export const Navbar: React.FC = () => {
         </Link>
 
         {/* Primary Nav Links */}
-        <nav className="flex items-center justify-end gap-1 text-xs font-sans overflow-x-auto whitespace-nowrap hide-scrollbar flex-nowrap pr-2 w-full">
+        <nav className="flex items-center gap-1 text-xs font-sans overflow-x-auto whitespace-nowrap hide-scrollbar flex-nowrap pr-2 w-full">
           <Link
             to="/"
             className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
