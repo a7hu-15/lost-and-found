@@ -37,12 +37,12 @@ def test_xss():
     print("\n## 2. XSS Payload Tests")
     xss_payload = "<script>alert('xss')</script><img src=x onerror=alert(1)>"
     data = {
-        "title": xss_payload,
+        "item_name": xss_payload,
         "category": "electronics",
         "location": xss_payload,
         "lost_date": "2023-01-01",
         "description": xss_payload,
-        "contact_email": "xss@example.com",
+        "email": "xss@example.com",
     }
     
     resp = requests.post(f"{BASE_URL}/lost/create", data=data, verify=False)
@@ -50,10 +50,10 @@ def test_xss():
     if resp.status_code == 201:
         item = resp.json()
         safe_title = "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;&lt;img src=x onerror=alert(1)&gt;"
-        if item["title"] == safe_title:
-             return print_result("XSS Injection in Title", xss_payload, "Properly HTML escaped string", resp.status_code, item["title"], True)
+        if item["item_name"] == safe_title:
+             return print_result("XSS Injection in Title", xss_payload, "Properly HTML escaped string", resp.status_code, item["item_name"], True)
         else:
-             return print_result("XSS Injection in Title", xss_payload, "Properly HTML escaped string", resp.status_code, item["title"], False)
+             return print_result("XSS Injection in Title", xss_payload, "Properly HTML escaped string", resp.status_code, item["item_name"], False)
     else:
         return print_result("XSS Injection", xss_payload, "HTTP 201 Created", resp.status_code, resp.text, False)
 
@@ -77,12 +77,12 @@ def test_file_upload():
         f.write(b"<?php echo 'shell'; ?>")
     
     data = {
-        "title": "Malicious Upload",
+        "item_name": "Malicious Upload",
         "category": "electronics",
         "location": "Library",
         "lost_date": "2023-01-01",
         "description": "Contains a PHP shell",
-        "contact_email": "hacker@example.com",
+        "email": "hacker@example.com",
     }
     
     files = {

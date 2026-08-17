@@ -1,5 +1,6 @@
 #!/bin/bash
 export SECRET_KEY=test-secret
+export DATABASE_URL=sqlite+aiosqlite:///test.db
 
 cd backend
 export PYTHONPATH=.
