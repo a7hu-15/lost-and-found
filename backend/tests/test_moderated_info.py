@@ -29,13 +29,11 @@ async def test_moderated_information_flow(mock_send_email):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         # Create a lost item
         lost_item_payload = {
-            "title": "QA Test Wallet",
-            "category": "Wallet",
+            "item_name": "QA Test Wallet",
             "location": "Cafeteria",
             "lost_date": "2026-08-09",
             "description": "Black leather wallet",
-            "contact_email": "owner@srm.edu",
-            "contact_phone": "+91 9876543210"
+            "email": "owner@srm.edu"
         }
         res_lost = await ac.post("/api/v1/lost/create", data=lost_item_payload)
         assert res_lost.status_code == 201

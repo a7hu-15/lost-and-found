@@ -185,6 +185,9 @@ async def get_lost_item(item_id: str, db: AsyncSession = Depends(get_db)):
 
 from app.models.item_information import LostItemInformation
 from app.schemas.item_information import ItemInformationCreate, ItemInformationOut
+from fastapi import BackgroundTasks
+from app.notifications.service import send_pending_information_notification
+from app.core.config import settings
 
 @router.post("/{report_id}/information", response_model=ItemInformationOut, status_code=status.HTTP_201_CREATED)
 @limiter.limit(LIMIT_CREATE)
@@ -192,6 +195,7 @@ async def submit_item_information(
     report_id: str,
     payload: ItemInformationCreate,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     # Verify the lost item exists
@@ -210,5 +214,12 @@ async def submit_item_information(
     db.add(info)
     await db.commit()
     await db.refresh(info)
+
+    background_tasks.add_task(
+        send_pending_information_notification,
+        email=settings.SUPPORT_EMAIL,
+        report_id=report_id,
+        info_id=info.id
+    )
 
     return info

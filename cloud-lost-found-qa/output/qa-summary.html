@@ -1,0 +1,220 @@
+
+    <html>
+      <head>
+        <title>Expanded QA Summary Report</title>
+        <style>
+          body { font-family: sans-serif; margin: 20px; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .PASS { color: green; font-weight: bold; }
+          .FAIL { color: red; font-weight: bold; }
+          .BLOCKED { color: orange; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <h1>Cloud Lost & Found QA Summary</h1>
+        <p>Total Tests: 21</p>
+        <table>
+          <tr>
+            <th>ID</th>
+            <th>Area</th>
+            <th>Test</th>
+            <th>Status</th>
+            <th>Classification</th>
+            <th>Notes</th>
+          </tr>
+    
+          <tr>
+            <td>A001</td>
+            <td>Admin Dashboard</td>
+            <td>Admin login with valid credentials</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A002</td>
+            <td>Admin Dashboard</td>
+            <td>Admin login with invalid credentials</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A003</td>
+            <td>Admin Dashboard</td>
+            <td>Normal user accessing /admin (403 Forbidden)</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A004</td>
+            <td>Admin Dashboard</td>
+            <td>API bypass attempt</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A005</td>
+            <td>Admin Dashboard</td>
+            <td>Admin dashboard loads statistics</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A006</td>
+            <td>Admin Dashboard</td>
+            <td>Admin moderation queue opens</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A007</td>
+            <td>Admin Dashboard</td>
+            <td>Approve pending report</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A008</td>
+            <td>Admin Dashboard</td>
+            <td>Reject flagged report</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>A009</td>
+            <td>Admin Dashboard</td>
+            <td>Delete report</td>
+            <td class="BLOCKED">BLOCKED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>U001</td>
+            <td>Public Website & Forms</td>
+            <td>Homepage loads correctly</td>
+            <td class="PASSED">PASSED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>U002</td>
+            <td>Public Website & Forms</td>
+            <td>Lost report form opens</td>
+            <td class="PASSED">PASSED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+          <tr>
+            <td>U003</td>
+            <td>Public Website & Forms</td>
+            <td>Validation triggered on empty required fields</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U004</td>
+            <td>Public Website & Forms</td>
+            <td>Submit valid Lost report (Happy Path)</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U005</td>
+            <td>Public Website & Forms</td>
+            <td>Boundary test - Location > 200 chars (Fails validation)</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U006</td>
+            <td>Public Website & Forms</td>
+            <td>Boundary test - Future Date (Fails validation)</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U007</td>
+            <td>Public Website & Forms</td>
+            <td>Security - XSS injection attempt in description</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U008</td>
+            <td>Public Website & Forms</td>
+            <td>Submit Found report without image (Fails validation)</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U009</td>
+            <td>Public Website & Forms</td>
+            <td>Submit valid Found report (Happy Path)</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U010</td>
+            <td>Public Website & Forms</td>
+            <td>Public report listing loads successfully</td>
+            <td class="FAILED">FAILED</td>
+            <td></td>
+            <td>Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed</td>
+          </tr>
+      
+          <tr>
+            <td>U011</td>
+            <td>Public Website & Forms</td>
+            <td>Search filtering works</td>
+            <td class="FAIL">FAIL</td>
+            <td>Env Limitation or App Bug</td>
+            <td>[31mTest timeout of 30000ms exceeded.[39m</td>
+          </tr>
+      
+          <tr>
+            <td>U012</td>
+            <td>Public Website & Forms</td>
+            <td>Privacy - Reporter emails are strictly hidden</td>
+            <td class="PASSED">PASSED</td>
+            <td></td>
+            <td></td>
+          </tr>
+      
+        </table>
+      </body>
+    </html>
+    

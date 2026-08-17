@@ -329,3 +329,8 @@ Campus Security & Lost & Found Team
     """
 
     send_email(email, subject, text_content, html_content)
+
+def send_pending_information_notification(email: str, report_id: str, info_id: str):
+    subject = f"New Information Submitted ({report_id})"
+    text_content = f"New information was submitted for report {report_id}. Please review it in the admin dashboard. Info ID: {info_id}"
+    send_email(email, subject, text_content)

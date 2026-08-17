@@ -15,13 +15,11 @@ async def test_health_check():
 async def test_create_lost_item_valid():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         payload = {
-            "title": "QA Test Dell XPS 15",
-            "category": "Electronics",
+            "item_name": "QA Test Dell XPS 15",
             "location": "Central Library 2nd Floor",
             "lost_date": "2026-08-08",
             "description": "Silver laptop with GitHub sticker on lid",
-            "contact_email": "qa.student@srm.edu",
-            "contact_phone": "+91 9876543210"
+            "email": "qa.student@srm.edu"
         }
         response = await ac.post("/api/v1/lost/create", data=payload)
     assert response.status_code == 201
@@ -35,15 +33,16 @@ async def test_create_lost_item_valid():
 async def test_create_found_item_valid():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         payload = {
-            "title": "QA Test Blue Wildcraft Backpack",
-            "category": "Bag",
+            "item_name": "QA Test Blue Wildcraft Backpack",
             "location": "Central Library 2nd Floor",
             "found_date": "2026-08-08",
             "storage_location": "Security Office Desk 1",
             "description": "Blue Wildcraft backpack found near quiet reading zone",
-            "contact_email": "qa.finder@srm.edu"
+            "email": "qa.finder@srm.edu"
         }
-        response = await ac.post("/api/v1/found/create", data=payload)
+        with open("../dummy.png", "rb") as f:
+            files = {"file": ("dummy.png", f, "image/png")}
+            response = await ac.post("/api/v1/found/create", data=payload, files=files)
     assert response.status_code == 201
     data = response.json()
     assert "report_id" in data
@@ -53,12 +52,11 @@ async def test_create_found_item_valid():
 async def test_track_report_authorized_and_forbidden():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         payload = {
-            "title": "Track Token Test Item",
-            "category": "Keys",
+            "item_name": "Track Token Test Item",
             "location": "Tech Park Block 3",
             "lost_date": "2026-08-08",
             "description": "Bike key with red keychain",
-            "contact_email": "track.test@srm.edu"
+            "email": "track.test@srm.edu"
         }
         create_res = await ac.post("/api/v1/lost/create", data=payload)
         report_data = create_res.json()

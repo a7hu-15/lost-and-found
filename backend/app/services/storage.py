@@ -21,7 +21,8 @@ class StorageBackend(ABC):
         if os.path.exists(full_path):
             os.remove(full_path)
             
-    async def save(
+    @abstractmethod
+    async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
         """Saves data and returns (public_url, is_flagged, moderation_result)."""
         pass
 
@@ -34,7 +35,6 @@ class LocalStorage(StorageBackend):
     async def delete(self, public_url: str):
         pass
 
-    @abstractmethod
     async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
         full_path = os.path.join(self.base_dir, filepath)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -67,7 +67,7 @@ class CloudinaryStorage(StorageBackend):
             except Exception: pass
         await loop.run_in_executor(None, _del)
         
-    async def save(
+    async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
         if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_KEY:
             raise ValueError("Cloudinary credentials not configured")
             

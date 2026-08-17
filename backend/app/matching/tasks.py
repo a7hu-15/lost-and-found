@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.models.lost_item import LostItem, ModerationStatus
 from app.models.found_item import FoundItem
-from app.models.item_status import ItemStatus
+from app.models.lost_item import ItemStatus
 from app.models.match import MatchScore
 from app.matching.engine import calculate_item_similarity
 
