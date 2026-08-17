@@ -70,6 +70,4 @@ npm run dev
 ```
 Web App will be available at `http://localhost:5173`
 
-## License
 
-Distributed under the MIT License.
