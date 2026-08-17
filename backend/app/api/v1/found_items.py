@@ -96,7 +96,10 @@ async def create_found_item(
     is_location_flagged, masked_location = moderator.moderate_text(location)
     is_storage_flagged, masked_storage_location = moderator.moderate_text(storage_location)
     
-    text_flagged = is_text_flagged or is_item_name_flagged or is_location_flagged or is_storage_flagged
+    is_brand_flagged, masked_brand = moderator.moderate_text(brand) if brand else (False, None)
+    is_color_flagged, masked_color = moderator.moderate_text(color) if color else (False, None)
+    
+    text_flagged = is_text_flagged or is_item_name_flagged or is_location_flagged or is_storage_flagged or is_brand_flagged or is_color_flagged
     # Auto-approving clean items for demo so they appear in search immediately
     moderation_status = ModerationStatus.PENDING_MODERATION if (text_flagged or image_flagged) else ModerationStatus.APPROVED
     flag_reason = []
@@ -115,8 +118,8 @@ async def create_found_item(
         report_id=report_id,
         access_token=access_token,
         item_name=masked_item_name,
-        brand=brand,
-        color=color,
+        brand=masked_brand,
+        color=masked_color,
         location=masked_location,
         found_date=found_date,
         description=masked_description,

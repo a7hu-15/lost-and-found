@@ -84,7 +84,10 @@ async def create_lost_item(
     is_item_name_flagged, masked_item_name = moderator.moderate_text(item_name)
     is_location_flagged, masked_location = moderator.moderate_text(location)
     
-    text_flagged = is_text_flagged or is_item_name_flagged or is_location_flagged
+    is_brand_flagged, masked_brand = moderator.moderate_text(brand) if brand else (False, None)
+    is_color_flagged, masked_color = moderator.moderate_text(color) if color else (False, None)
+    
+    text_flagged = is_text_flagged or is_item_name_flagged or is_location_flagged or is_brand_flagged or is_color_flagged
     
     # Calculate ModerationStatus
     # Auto-approving clean items for demo so they appear in search immediately
@@ -105,8 +108,8 @@ async def create_lost_item(
         report_id=report_id,
         access_token=access_token,
         item_name=masked_item_name,
-        brand=brand,
-        color=color,
+        brand=masked_brand,
+        color=masked_color,
         location=masked_location,
         lost_date=lost_date,
         description=masked_description,
