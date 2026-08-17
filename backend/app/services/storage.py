@@ -10,7 +10,18 @@ from app.core.config import settings
 
 class StorageBackend(ABC):
     @abstractmethod
-    async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
+    async def delete(self, public_url: str):
+        pass
+
+    @abstractmethod
+    async def delete(self, public_url: str):
+        if not public_url.startswith(self.base_url): return
+        rel_path = public_url[len(self.base_url):].lstrip("/")
+        full_path = os.path.join(self.base_dir, rel_path)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+            
+    async def save(
         """Saves data and returns (public_url, is_flagged, moderation_result)."""
         pass
 
@@ -20,6 +31,10 @@ class LocalStorage(StorageBackend):
         self.base_url = base_url
         os.makedirs(self.base_dir, exist_ok=True)
 
+    async def delete(self, public_url: str):
+        pass
+
+    @abstractmethod
     async def save(self, filepath: str, data: bytes) -> Tuple[str, bool, str]:
         full_path = os.path.join(self.base_dir, filepath)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -39,7 +54,20 @@ class CloudinaryStorage(StorageBackend):
             secure=True
         )
 
-    async def save(self, filepath: str, data: bytes) -> str:
+    async def delete(self, public_url: str):
+        if not public_url: return
+        import asyncio
+        loop = asyncio.get_event_loop()
+        def _del():
+            try:
+                # Extract public_id from URL
+                parts = public_url.split("/")
+                public_id = "/".join(parts[-3:]).split(".")[0]
+                cloudinary.uploader.destroy(public_id)
+            except Exception: pass
+        await loop.run_in_executor(None, _del)
+        
+    async def save(
         if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_KEY:
             raise ValueError("Cloudinary credentials not configured")
             

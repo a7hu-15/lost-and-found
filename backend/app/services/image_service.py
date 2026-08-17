@@ -81,3 +81,8 @@ async def process_and_store_image(file: UploadFile):
     thumb_url, _, _ = await storage.save(f"{now.year}/{now.month:02d}/{thumb_filename}", thumb_bytes)
 
     return main_url, thumb_url, is_flagged, mod_result
+
+async def delete_image(public_url: str):
+    from app.services.storage import get_storage_backend
+    storage = get_storage_backend()
+    await storage.delete(public_url)

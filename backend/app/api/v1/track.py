@@ -86,11 +86,11 @@ async def recover_reports(
     email = req.email.lower().strip()
 
     # Search lost items
-    lost_res = await db.execute(select(LostItem).where(LostItem.contact_email == email))
+    lost_res = await db.execute(select(LostItem).where(LostItem.email == email))
     lost_items = lost_res.scalars().all()
 
     # Search found items
-    found_res = await db.execute(select(FoundItem).where(FoundItem.contact_email == email))
+    found_res = await db.execute(select(FoundItem).where(FoundItem.email == email))
     found_items = found_res.scalars().all()
 
     if lost_items or found_items:
@@ -101,10 +101,10 @@ async def recover_reports(
 
         for item in lost_items:
             tracking_url = f"http://localhost:5173/track?report_id={item.report_id}&token={item.access_token}"
-            items_list_text += f"- Lost Item: {item.title} (ID: {item.report_id})\n  Link: {tracking_url}\n\n"
+            items_list_text += f"- Lost Item: {item.item_name} (ID: {item.report_id})\n  Link: {tracking_url}\n\n"
             items_list_html += f"""
             <div style="background:#f4f4f5; padding:12px; border-radius:6px; margin-bottom:10px; font-family:monospace;">
-              <div><strong>[Lost] {item.title}</strong></div>
+              <div><strong>[Lost] {item.item_name}</strong></div>
               <div style="font-size:12px; color:#71717a;">ID: {item.report_id} | Status: {item.status}</div>
               <a href="{tracking_url}" style="color:#2563eb; font-size:12px; font-weight:bold;">Track Status &rarr;</a>
             </div>
@@ -112,10 +112,10 @@ async def recover_reports(
 
         for item in found_items:
             tracking_url = f"http://localhost:5173/track?report_id={item.report_id}&token={item.access_token}"
-            items_list_text += f"- Found Item: {item.title} (ID: {item.report_id})\n  Link: {tracking_url}\n\n"
+            items_list_text += f"- Found Item: {item.item_name} (ID: {item.report_id})\n  Link: {tracking_url}\n\n"
             items_list_html += f"""
             <div style="background:#f4f4f5; padding:12px; border-radius:6px; margin-bottom:10px; font-family:monospace;">
-              <div><strong>[Found] {item.title}</strong></div>
+              <div><strong>[Found] {item.item_name}</strong></div>
               <div style="font-size:12px; color:#71717a;">ID: {item.report_id} | Status: {item.status}</div>
               <a href="{tracking_url}" style="color:#2563eb; font-size:12px; font-weight:bold;">Track Status &rarr;</a>
             </div>

@@ -7,18 +7,16 @@ import { ItemCard } from '../components/ItemCard';
 
 export const LostItems: React.FC = () => {
   const [items, setItems] = useState<LostItem[]>([]);
-  const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchLostItems();
-  }, [category]);
+  }, []);
 
   const fetchLostItems = async () => {
     setLoading(true);
     try {
-      const url = category ? `/lost/all?category=${category}` : '/lost/all';
-      const res = await api.get(url);
+      const res = await api.get('/lost/all');
       setItems(res.data);
     } catch (err) {
       console.error('Failed to load lost items', err);
@@ -36,19 +34,7 @@ export const LostItems: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="saas-input py-1.5 px-3 text-xs"
-          >
-            <option value="">All Categories</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Wallet">Wallet / Purse</option>
-            <option value="Keys">Keys</option>
-            <option value="ID Card">ID / Cards</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Books">Books</option>
-          </select>
+
 
           <Link to="/report-lost" className="saas-button-primary text-xs py-1.5 px-3 flex items-center gap-1">
             <Plus className="w-3.5 h-3.5" />

@@ -30,26 +30,26 @@ router = APIRouter()
 @limiter.limit(LIMIT_CREATE)
 async def create_lost_item(
     request: Request,
-    title: str = Form(...),
+    item_name: str = Form(...),
     location: str = Form(...),
     lost_date: date = Form(...),
     description: str = Form(...),
-    contact_email: str = Form(...),
+    email: str = Form(...),
     brand: Optional[str] = Form(None),
     color: Optional[str] = Form(None),
-    reward: Optional[float] = Form(0.0),
+    
     file: Optional[UploadFile] = File(None),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: AsyncSession = Depends(get_db)
 ):
     # Server-side validation: Length and boundary checks
-    if len(title.strip()) > 100:
+    if len(item_name.strip()) > 100:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Title must not exceed 100 characters.")
     if len(location.strip()) > 200:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Location must not exceed 200 characters.")
     if len(description.strip().split()) > 100:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description exceeds the maximum limit of 100 words.")
-    if len(contact_email.strip()) > 254:
+    if len(email.strip()) > 254:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email address must not exceed 254 characters.")
     if brand and len(brand.strip()) > 50:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Brand must not exceed 50 characters.")
@@ -72,7 +72,7 @@ async def create_lost_item(
         image_url, thumbnail_url, image_flagged, image_mod_result = await process_and_store_image(file)
 
     # XSS Sanitization
-    title = html.escape(title.strip())
+    item_name = html.escape(item_name.strip())
     location = html.escape(location.strip())
     description = html.escape(description.strip())
     brand = html.escape(brand.strip()) if brand else None
@@ -81,10 +81,10 @@ async def create_lost_item(
     # Text Moderation
     moderator = get_text_moderator()
     is_text_flagged, masked_description = moderator.moderate_text(description)
-    is_title_flagged, masked_title = moderator.moderate_text(title)
+    is_item_name_flagged, masked_item_name = moderator.moderate_text(item_name)
     is_location_flagged, masked_location = moderator.moderate_text(location)
     
-    text_flagged = is_text_flagged or is_title_flagged or is_location_flagged
+    text_flagged = is_text_flagged or is_item_name_flagged or is_location_flagged
     
     # Calculate ModerationStatus
     # Starts at PENDING_VERIFICATION until email is verified
@@ -96,71 +96,47 @@ async def create_lost_item(
     if image_flagged:
         flag_reason.append("Image was flagged by moderation API.")
 
+    import json
+    original_data = json.dumps({"item_name": item_name, "location": location, "description": description})
+    moderated_data = json.dumps({"item_name": masked_item_name, "location": masked_location, "description": masked_description})
+
     lost_item = LostItem(
+        original_text=original_data,
+        moderated_text=moderated_data,
         report_id=report_id,
         access_token=access_token,
-        title=masked_title,
-        category=None,
+        item_name=masked_item_name,
         brand=brand,
         color=color,
         location=masked_location,
         lost_date=lost_date,
         description=masked_description,
-        reward=reward or 0.0,
+        
         image_url=image_url,
         thumbnail_url=thumbnail_url,
-        contact_email=contact_email,
-        contact_phone=None,
+        email=email,
         status=ItemStatus.REPORTED,
         moderation_status=moderation_status,
-        text_moderation_result="FLAGGED" if text_flagged else "CLEAN",
+        
         image_moderation_result=image_mod_result,
         flag_reason=" | ".join(flag_reason) if flag_reason else None
     )
     db.add(lost_item)
     await db.flush()
 
-    # Trigger automatic matching engine against existing found items
-    found_result = await db.execute(select(FoundItem).where(FoundItem.status == ItemStatus.REPORTED))
-    found_items = found_result.scalars().all()
-    
-    highest_score = 0.0
-    for found in found_items:
-        score, breakdown = calculate_item_similarity(lost_item, found)
-        # Discard low-confidence candidates (< settings.MATCH_THRESHOLD)
-        if score >= settings.MATCH_THRESHOLD:
-            existing_match = await db.execute(
-                select(MatchScore).where(
-                    MatchScore.lost_item_id == lost_item.id,
-                    MatchScore.found_item_id == found.id
-                )
-            )
-            if not existing_match.scalar_one_or_none():
-                match = MatchScore(
-                    lost_item_id=lost_item.id,
-                    found_item_id=found.id,
-                    similarity_score=score,
-                    breakdown_json=breakdown
-                )
-                db.add(match)
-            if score > highest_score:
-                highest_score = score
-            # NOTE: Automatic match alert emails removed per user specification (ZERO match emails sent)
-
-    if highest_score >= settings.MATCH_THRESHOLD:
-        lost_item.status = ItemStatus.MATCHED
+    # Matching engine disabled per spec
 
     # Audit log
     audit = AuditLog(
         action="REPORT_LOST_ITEM",
         resource="lost_items",
-        details={"report_id": report_id, "title": lost_item.title, "has_image": image_url is not None}
+        details={"report_id": report_id, "title": lost_item.item_name, "has_image": image_url is not None}
     )
     db.add(audit)
     
     # Create verification token
     v_token = VerificationToken(
-        email=lost_item.contact_email,
+        email=lost_item.email,
         report_id=lost_item.report_id,
         report_type=ReportType.LOST
     )
@@ -172,7 +148,7 @@ async def create_lost_item(
     # Verification email sent in background to prevent timeout
     background_tasks.add_task(
         send_verification_email,
-        email=lost_item.contact_email,
+        email=lost_item.email,
         token=v_token.token,
         report_id=lost_item.report_id
     )
@@ -181,7 +157,6 @@ async def create_lost_item(
 
 @router.get("/all", response_model=List[LostItemOut])
 async def list_lost_items(
-    category: Optional[str] = None,
     location: Optional[str] = None,
     status: Optional[ItemStatus] = None,
     db: AsyncSession = Depends(get_db)
@@ -190,8 +165,6 @@ async def list_lost_items(
         LostItem.status != ItemStatus.HIDDEN,
         LostItem.moderation_status == ModerationStatus.APPROVED
     ).order_by(LostItem.created_at.desc())
-    if category:
-        query = query.where(LostItem.category.ilike(f"%{category}%"))
     if location:
         query = query.where(LostItem.location.ilike(f"%{location}%"))
     if status:

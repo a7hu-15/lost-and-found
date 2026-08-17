@@ -96,7 +96,7 @@ export const AdminClaims: React.FC = () => {
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--admin-border)] pb-3">
                 <div>
-                  <span className="text-[10px] font-mono text-[var(--admin-text-muted)] uppercase font-semibold">Item: {claim.found_item?.title}</span>
+                  <span className="text-[10px] font-mono text-[var(--admin-text-muted)] uppercase font-semibold">Item: {claim.found_item?.item_name}</span>
                   <div className="text-base font-bold text-[var(--admin-text-primary)]">Found Report ID: {claim.found_item?.report_id}</div>
                   <div className="text-xs text-[var(--admin-text-secondary)] flex items-center gap-1.5 mt-0.5 font-mono">
                     <MapPin className="w-3.5 h-3.5 text-emerald-500" />

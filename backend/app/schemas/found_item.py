@@ -6,19 +6,19 @@ from app.models.lost_item import ItemStatus
 from app.schemas.lost_item import validate_indian_mobile, validate_description_words
 
 class FoundItemCreate(BaseModel):
-    title: str
+    item_name: str
     brand: Optional[str] = None
     color: Optional[str] = None
     location: str
     found_date: date
     description: str
     storage_location: str = "Campus Security Office - Gate 1"
-    image_url: Optional[str] = None
-    contact_email: EmailStr
+    image_url: str
+    email: EmailStr
 
-    @field_validator('title')
+    @field_validator('item_name')
     @classmethod
-    def validate_title_len(cls, v: str) -> str:
+    def validate_item_name_len(cls, v: str) -> str:
         if len(v.strip()) > 100:
             raise ValueError("Title must not exceed 100 characters.")
         return v
@@ -37,7 +37,7 @@ class FoundItemCreate(BaseModel):
             raise ValueError("Brand and color must not exceed 50 characters each.")
         return v
 
-    @field_validator('contact_email')
+    @field_validator('email')
     @classmethod
     def validate_email_len(cls, v: EmailStr) -> EmailStr:
         if len(str(v)) > 254:
@@ -62,14 +62,14 @@ class FoundItemOut(BaseModel):
     id: str
     report_id: str
     access_token: str
-    title: str
+    item_name: str
     brand: Optional[str]
     color: Optional[str]
     location: str
     found_date: date
     description: str
     storage_location: str
-    image_url: Optional[str]
+    image_url: str
     thumbnail_url: Optional[str]
     status: ItemStatus
     created_at: datetime
@@ -80,9 +80,11 @@ class FoundItemOut(BaseModel):
 from app.models.lost_item import ModerationStatus
 
 class AdminFoundItemOut(FoundItemOut):
-    contact_email: str
+    email: str
     moderation_status: ModerationStatus
-    text_moderation_result: Optional[str]
+    original_text: Optional[str]
+    moderated_text: Optional[str]
+    verification_status: bool
     image_moderation_result: Optional[str]
     flag_reason: Optional[str]
     reviewed_at: Optional[datetime]

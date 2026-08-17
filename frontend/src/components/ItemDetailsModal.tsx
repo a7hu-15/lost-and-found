@@ -76,12 +76,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">{item.title}</h2>
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">{item.item_name}</h2>
 
         {/* Main Large Image */}
         {item.image_url ? (
           <div className="w-full h-64 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
-            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+            <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover" />
           </div>
         ) : (
           <div className="w-full h-32 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-500 font-mono text-xs gap-1.5 font-medium">
@@ -94,7 +94,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ item, type, 
         <div className="grid grid-cols-2 gap-3 text-xs font-mono">
           <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-0.5">
             <span className="text-zinc-600 dark:text-zinc-400 text-[10px] uppercase block font-semibold">Category</span>
-            <span className="text-zinc-900 dark:text-zinc-100 font-semibold block">{item.category}</span>
+            <span className="text-zinc-900 dark:text-zinc-100 font-semibold block">{(item.brand || "N/A")}</span>
           </div>
 
           <div className="bg-zinc-100/90 dark:bg-zinc-900/80 p-3 rounded border border-zinc-200 dark:border-zinc-800 space-y-0.5">

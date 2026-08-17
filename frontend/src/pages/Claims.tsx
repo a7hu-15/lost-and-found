@@ -96,7 +96,7 @@ export const Claims: React.FC = () => {
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
           <div>
             <span className="text-[10px] font-mono text-emerald-400 uppercase">Claim Item Verification</span>
-            <h1 className="text-lg font-bold text-white tracking-tight">{foundItem.title}</h1>
+            <h1 className="text-lg font-bold text-white tracking-tight">{foundItem.item_name}</h1>
           </div>
           <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2.5 py-1 rounded border border-zinc-800">
             {foundItem.report_id}
@@ -104,7 +104,7 @@ export const Claims: React.FC = () => {
         </div>
 
         <div className="text-xs text-zinc-400 font-mono space-y-1">
-          <div>Category: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.category}</span></div>
+          <div>Brand: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.brand || 'N/A'}</span></div>
           <div>Where Found: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.location}</span></div>
           <div>Holding Desk: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{foundItem.storage_location}</span></div>
         </div>

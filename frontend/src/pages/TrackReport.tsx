@@ -163,12 +163,12 @@ export const TrackReport: React.FC = () => {
                   </span>
                 )}
               </div>
-              <h2 className="text-lg font-bold text-white tracking-tight mt-1">{item.title}</h2>
+              <h2 className="text-lg font-bold text-white tracking-tight mt-1">{item.item_name}</h2>
             </div>
 
             <div className="text-xs font-mono text-zinc-400 text-right">
               <div>Created: {formatDate(item.created_at)}</div>
-              <div>Category: {item.category || 'Uncategorized'}</div>
+              <div>Category: {(item.brand || "N/A") || 'Uncategorized'}</div>
             </div>
           </div>
 
@@ -243,7 +243,7 @@ export const TrackReport: React.FC = () => {
                           {match.similarity_score.toFixed(0)}% Similarity Match
                         </span>
                       </div>
-                      <h4 className="text-sm font-semibold text-white mt-0.5">{match.found_item?.title}</h4>
+                      <h4 className="text-sm font-semibold text-white mt-0.5">{match.found_item?.item_name}</h4>
                       <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{match.found_item?.description}</p>
                     </div>
 

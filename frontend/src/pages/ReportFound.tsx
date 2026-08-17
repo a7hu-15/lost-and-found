@@ -17,7 +17,7 @@ export const ReportFound: React.FC = () => {
   // Form State
   const [brand, setBrand] = useState(linkedLostItem?.brand || '');
   const [color, setColor] = useState(linkedLostItem?.color || '');
-  const [title, setTitle] = useState(linkedLostItem?.title || '');
+  const [title, setTitle] = useState(linkedLostItem?.item_name || '');
   const [location, setLocation] = useState(linkedLostItem?.location || '');
   const [foundDate, setFoundDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
@@ -111,14 +111,14 @@ export const ReportFound: React.FC = () => {
 
     try {
       const formData = new FormData();
-      formData.append('title', calculatedTitle);
+      formData.append('item_name', calculatedTitle);
       if (brand) formData.append('brand', brand);
       if (color) formData.append('color', color);
       formData.append('location', location);
       formData.append('found_date', foundDate);
       formData.append('description', description);
       formData.append('storage_location', storageLocation);
-      formData.append('contact_email', contactEmail);
+      formData.append('email', contactEmail);
       if (linkedLostItem) formData.append('lost_item_id', linkedLostItem.id);
       if (uploadedFile) formData.append('file', uploadedFile);
 

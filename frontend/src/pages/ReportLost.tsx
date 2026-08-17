@@ -90,13 +90,13 @@ export const ReportLost: React.FC = () => {
 
     try {
       const formData = new FormData();
-      formData.append('title', calculatedTitle);
+      formData.append('item_name', calculatedTitle);
       if (brand) formData.append('brand', brand);
       if (color) formData.append('color', color);
       formData.append('location', location);
       formData.append('lost_date', lostDate);
       formData.append('description', description);
-      formData.append('contact_email', contactEmail);
+      formData.append('email', contactEmail);
       if (uploadedFile) formData.append('file', uploadedFile);
 
       const res = await api.post('/lost/create', formData);

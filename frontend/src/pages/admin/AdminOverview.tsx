@@ -162,10 +162,10 @@ export const AdminOverview: React.FC = () => {
               </div>
 
               <div className="space-y-2.5 text-xs font-mono">
-                {Object.entries(stats.category_distribution || {}).length === 0 ? (
+                {Object.entries(stats.status_distribution || {}).length === 0 ? (
                   <div className="text-[var(--admin-text-muted)] text-center py-6">No items logged yet</div>
                 ) : (
-                  Object.entries(stats.category_distribution || {}).map(([cat, count]) => (
+                  Object.entries(stats.status_distribution || {}).map(([cat, count]) => (
                     <div key={cat} className="flex justify-between items-center bg-[var(--admin-surface-subtle)] p-2.5 rounded border border-[var(--admin-border)]">
                       <span className="text-[var(--admin-text-primary)] font-sans">{cat}</span>
                       <span className="text-[var(--admin-text-primary)] font-bold bg-[var(--admin-surface)] px-2 py-0.5 rounded border border-[var(--admin-border)]">{count}</span>

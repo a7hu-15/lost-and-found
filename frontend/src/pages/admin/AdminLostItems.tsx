@@ -21,7 +21,7 @@ export const AdminLostItems: React.FC = () => {
 
   // Moderation Modal state
   const [selectedItem, setSelectedItem] = useState<LostItem | null>(null);
-  const [targetStatus, setTargetStatus] = useState<ItemStatus>('HIDDEN');
+  const [targetStatus, setTargetStatus] = useState<any>('APPROVED');
   const [moderationReason, setModerationReason] = useState('Inappropriate Content');
   const [adminNotes, setAdminNotes] = useState('');
   const [actionMessage, setActionMessage] = useState('');
@@ -72,7 +72,7 @@ export const AdminLostItems: React.FC = () => {
     fetchTips();
   }, []);
 
-  const openModerationModal = (item: LostItem, status: ItemStatus) => {
+  const openModerationModal = (item: LostItem, status: any) => {
     setSelectedItem(item);
     setTargetStatus(status);
     setModerationReason(status === 'HIDDEN' ? 'Inappropriate Content' : 'Status Update');
@@ -83,8 +83,8 @@ export const AdminLostItems: React.FC = () => {
     if (!selectedItem) return;
 
     try {
-      await api.patch(`/admin/lost-items/${selectedItem.id}/status`, {
-        status: targetStatus,
+      await api.patch(`/admin/lost-items/${selectedItem.id}/moderation`, {
+        moderation_status: targetStatus,
         moderation_reason: moderationReason,
         admin_notes: adminNotes
       });
@@ -100,10 +100,10 @@ export const AdminLostItems: React.FC = () => {
 
   const filteredItems = items.filter((item) => {
     const matchesSearch =
-      item.title.toLowerCase().includes(search.toLowerCase()) ||
+      item.item_name.toLowerCase().includes(search.toLowerCase()) ||
       item.report_id.toLowerCase().includes(search.toLowerCase()) ||
-      item.contact_email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+      item.email.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || item.moderation_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -186,11 +186,11 @@ export const AdminLostItems: React.FC = () => {
                   <tr key={item.id} className={`hover:bg-[var(--admin-surface-subtle)] transition-colors ${isHidden ? 'bg-rose-500/5' : ''}`}>
                     <td className="py-3 px-4">
                       <div className="font-mono text-[11px] text-amber-600 dark:text-amber-400 font-bold">{item.report_id}</div>
-                      <div className="font-semibold text-[var(--admin-text-primary)] truncate max-w-xs">{item.title}</div>
+                      <div className="font-semibold text-[var(--admin-text-primary)] truncate max-w-xs">{item.item_name}</div>
                     </td>
 
                     <td className="py-3 px-4 font-mono text-[var(--admin-text-secondary)]">
-                      {item.category}
+                      {(item.brand || "N/A")}
                     </td>
 
                     <td className="py-3 px-4 text-[var(--admin-text-secondary)] truncate max-w-xs">
@@ -198,7 +198,7 @@ export const AdminLostItems: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 font-mono text-[var(--admin-text-muted)]">
-                      {item.contact_email}
+                      {item.email}
                     </td>
 
                     <td className="py-3 px-4 font-mono">
@@ -215,14 +215,14 @@ export const AdminLostItems: React.FC = () => {
                     <td className="py-3 px-4 text-right space-x-2">
                       {isHidden ? (
                         <button
-                          onClick={() => openModerationModal(item, 'REPORTED')}
+                          onClick={() => openModerationModal(item, 'APPROVED')}
                           className="admin-button-secondary text-xs py-1 px-2.5 inline-flex items-center gap-1 hover:text-emerald-500"
                         >
                           <Eye className="w-3.5 h-3.5" /> Unhide Report
                         </button>
                       ) : (
                         <button
-                          onClick={() => openModerationModal(item, 'HIDDEN')}
+                          onClick={() => openModerationModal(item, 'REJECTED')}
                           className="admin-button-secondary text-xs py-1 px-2.5 inline-flex items-center gap-1 hover:text-rose-500"
                         >
                           <EyeOff className="w-3.5 h-3.5" /> Hide (Soft-Delete)
@@ -254,7 +254,7 @@ export const AdminLostItems: React.FC = () => {
 
             <div className="bg-[var(--admin-surface-subtle)] p-3 rounded border border-[var(--admin-border)] text-xs font-mono space-y-1">
               <div><span className="text-[var(--admin-text-muted)]">Report ID:</span> <span className="text-amber-500 font-bold">{selectedItem.report_id}</span></div>
-              <div><span className="text-[var(--admin-text-muted)]">Title:</span> <span className="text-[var(--admin-text-primary)] font-semibold">{selectedItem.title}</span></div>
+              <div><span className="text-[var(--admin-text-muted)]">Title:</span> <span className="text-[var(--admin-text-primary)] font-semibold">{selectedItem.item_name}</span></div>
               <div><span className="text-[var(--admin-text-muted)]">Target Action:</span> <span className="text-rose-500 font-bold uppercase">{targetStatus}</span></div>
             </div>
 

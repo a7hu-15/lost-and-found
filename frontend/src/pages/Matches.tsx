@@ -76,13 +76,13 @@ export const Matches: React.FC = () => {
                     Reported Lost
                   </span>
                   <h4 className="text-sm font-semibold text-white">
-                    {match.lost_item?.title || 'Lost Item'}
+                    {match.lost_item?.item_name || 'Lost Item'}
                   </h4>
                   <p className="text-xs text-zinc-400 line-clamp-2">
                     {match.lost_item?.description}
                   </p>
                   <div className="text-[11px] text-zinc-400 space-y-0.5 font-mono">
-                    <div>Category: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.category}</span></div>
+                    <div>Brand: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.brand || 'N/A'}</span></div>
                     <div>Location: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.location}</span></div>
                     <div>Date: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.lost_item?.lost_date}</span></div>
                   </div>
@@ -94,13 +94,13 @@ export const Matches: React.FC = () => {
                     Discovered Found
                   </span>
                   <h4 className="text-sm font-semibold text-white">
-                    {match.found_item?.title || 'Found Item'}
+                    {match.found_item?.item_name || 'Found Item'}
                   </h4>
                   <p className="text-xs text-zinc-400 line-clamp-2">
                     {match.found_item?.description}
                   </p>
                   <div className="text-[11px] text-zinc-400 space-y-0.5 font-mono">
-                    <div>Category: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.category}</span></div>
+                    <div>Brand: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.brand || 'N/A'}</span></div>
                     <div>Location: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.location}</span></div>
                     <div>Holding: <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{match.found_item?.storage_location}</span></div>
                   </div>

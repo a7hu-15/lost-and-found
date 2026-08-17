@@ -19,19 +19,16 @@ export interface LostItem {
   id: string;
   report_id: string;
   user_id?: string;
-  title: string;
-  category: string;
-  brand?: string;
+  item_name: string;
+    brand?: string;
   color?: string;
   location: string;
   lost_date: string;
   description: string;
-  reward?: number;
-  image_url?: string;
+    image_url?: string;
   thumbnail_url?: string;
-  contact_email: string;
-  contact_phone?: string;
-  status: ItemStatus;
+  email: string;
+    status: ItemStatus;
   moderation_status: ModerationStatus;
   text_moderation_result?: string;
   image_moderation_result?: string;
@@ -43,9 +40,8 @@ export interface FoundItem {
   id: string;
   report_id: string;
   reporter_id?: string;
-  title: string;
-  category: string;
-  brand?: string;
+  item_name: string;
+    brand?: string;
   color?: string;
   location: string;
   found_date: string;
@@ -53,9 +49,8 @@ export interface FoundItem {
   storage_location: string;
   image_url?: string;
   thumbnail_url?: string;
-  contact_email: string;
-  contact_phone?: string;
-  status: ItemStatus;
+  email: string;
+    status: ItemStatus;
   moderation_status: ModerationStatus;
   text_moderation_result?: string;
   image_moderation_result?: string;
@@ -124,7 +119,7 @@ export interface DashboardStats {
   pending_claims: number;
   resolved_claims: number;
   resolution_rate: number;
-  category_distribution: Record<string, number>;
+  status_distribution: Record<string, number>;
   open_support_tickets: number;
 }
 

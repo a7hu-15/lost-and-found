@@ -24,7 +24,7 @@ class DashboardStats(BaseModel):
     pending_claims: int
     resolved_claims: int
     resolution_rate: float
-    category_distribution: Dict[str, int]
+    status_distribution: Dict[str, int]
     open_support_tickets: int = 0
 
 class UserRoleUpdate(BaseModel):

@@ -95,7 +95,7 @@ async def review_claim(
             claim.found_item.status = ItemStatus.RETURNED
             # Send pickup email
             send_claim_approved_email(
-                email=claim.claimant_email or claim.found_item.contact_email,
+                email=claim.claimant_email or claim.found_item.email,
                 report_id=claim.found_item.report_id,
                 storage_location=claim.found_item.storage_location
             )

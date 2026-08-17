@@ -9,6 +9,7 @@ from app.models.user import User, UserRole, DEFAULT_PERMISSIONS
 from app.models.staff_invitation import StaffInvitation
 from app.models.lost_item import LostItem, ItemStatus
 from app.models.found_item import FoundItem
+from app.matching.tasks import run_matching_engine_background
 from app.models.match import MatchScore
 from app.models.claim import Claim, ClaimStatus
 from app.models.support_ticket import SupportTicket, TicketStatus
@@ -53,9 +54,9 @@ async def get_dashboard_stats(
     resolution_rate = round((approved_claims / total_claims * 100.0), 1) if total_claims > 0 else 100.0
 
     # Category distribution
-    cat_query = select(FoundItem.category, func.count(FoundItem.id)).group_by(FoundItem.category)
+    cat_query = select(FoundItem.status, func.count(FoundItem.id)).group_by(FoundItem.status)
     cat_result = await db.execute(cat_query)
-    category_distribution = {cat: count for cat, count in cat_result.all()}
+    status_distribution = {cat: count for cat, count in cat_result.all()}
 
     return DashboardStats(
         total_users=users_count,
@@ -65,7 +66,7 @@ async def get_dashboard_stats(
         pending_claims=pending_claims,
         resolved_claims=approved_claims,
         resolution_rate=resolution_rate,
-        category_distribution=category_distribution,
+        status_distribution=status_distribution,
         open_support_tickets=open_tickets
     )
 
@@ -344,9 +345,9 @@ async def update_lost_item_moderation(
     
     from app.notifications.service import send_report_approved_email, send_report_rejected_email
     if item.moderation_status == ModerationStatus.APPROVED:
-        send_report_approved_email(item.contact_email, item.report_id, item.title)
+        send_report_approved_email(item.email, item.report_id, item.item_name)
     elif item.moderation_status == ModerationStatus.REJECTED:
-        send_report_rejected_email(item.contact_email, item.report_id, item.title)
+        send_report_rejected_email(item.email, item.report_id, item.item_name)
 
     return item
 
@@ -430,9 +431,9 @@ async def update_found_item_moderation(
     
     from app.notifications.service import send_report_approved_email, send_report_rejected_email
     if item.moderation_status == ModerationStatus.APPROVED:
-        send_report_approved_email(item.contact_email, item.report_id, item.title)
+        send_report_approved_email(item.email, item.report_id, item.item_name)
     elif item.moderation_status == ModerationStatus.REJECTED:
-        send_report_rejected_email(item.contact_email, item.report_id, item.title)
+        send_report_rejected_email(item.email, item.report_id, item.item_name)
 
     return item
 
@@ -552,9 +553,61 @@ async def update_information_status(
         lost_item = lost_item_res.scalar_one_or_none()
         if lost_item:
             send_information_approved_owner_email(
-                email=lost_item.contact_email,
+                email=lost_item.email,
                 message=info.message,
                 report_id=lost_item.report_id
             )
 
     return info
+
+from app.services.image_service import delete_image
+
+@router.delete("/lost-items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_lost_item(
+    item_id: str,
+    current_user: User = Depends(require_permission("moderate_lost_items")),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(LostItem).where(LostItem.id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Lost item not found.")
+
+    if item.image_url:
+        await delete_image(item.image_url)
+
+    await db.delete(item)
+    
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="ADMIN_DELETE_LOST_ITEM",
+        resource="lost_items",
+        details={"report_id": item.report_id}
+    )
+    db.add(audit)
+    await db.commit()
+
+@router.delete("/found-items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_found_item(
+    item_id: str,
+    current_user: User = Depends(require_permission("moderate_found_items")),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(FoundItem).where(FoundItem.id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="Found item not found.")
+
+    if item.image_url:
+        await delete_image(item.image_url)
+
+    await db.delete(item)
+    
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="ADMIN_DELETE_FOUND_ITEM",
+        resource="found_items",
+        details={"report_id": item.report_id}
+    )
+    db.add(audit)
+    await db.commit()

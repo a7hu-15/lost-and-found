@@ -7,18 +7,17 @@ import { ItemCard } from '../components/ItemCard';
 
 export const FoundItems: React.FC = () => {
   const [items, setItems] = useState<FoundItem[]>([]);
-  const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchFoundItems();
-  }, [category]);
+  }, []);
 
   const fetchFoundItems = async () => {
     setLoading(true);
     try {
-      const url = category ? `/found/all?category=${category}` : '/found/all';
+      const url = '/found/all';
       const res = await api.get(url);
       setItems(res.data);
     } catch (err) {
@@ -41,19 +40,7 @@ export const FoundItems: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="saas-input py-1.5 px-3 text-xs"
-          >
-            <option value="">All Categories</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Wallet">Wallet / Purse</option>
-            <option value="Keys">Keys</option>
-            <option value="ID Card">ID / Cards</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Books">Books</option>
-          </select>
+
 
           <Link to="/report-found" className="saas-button-primary text-xs py-1.5 px-3 flex items-center gap-1">
             <Plus className="w-3.5 h-3.5" />

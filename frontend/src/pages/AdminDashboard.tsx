@@ -145,7 +145,7 @@ export const AdminDashboard: React.FC = () => {
                 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
                   <div>
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase">Item: {c.found_item?.title}</span>
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase">Item: {c.found_item?.item_name}</span>
                     <div className="text-sm font-semibold text-white">Report ID: {c.found_item?.report_id}</div>
                   </div>
 
@@ -287,7 +287,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
                   <div>
                     <span className="text-[10px] font-mono text-zinc-500 uppercase">Lost Item | {item.report_id}</span>
-                    <div className="text-sm font-semibold text-white">{item.title}</div>
+                    <div className="text-sm font-semibold text-white">{item.item_name}</div>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase bg-amber-950/40 text-amber-300 border-amber-900/60">
                     {item.moderation_status}
@@ -336,7 +336,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
                   <div>
                     <span className="text-[10px] font-mono text-zinc-500 uppercase">Found Item | {item.report_id}</span>
-                    <div className="text-sm font-semibold text-white">{item.title}</div>
+                    <div className="text-sm font-semibold text-white">{item.item_name}</div>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase bg-amber-950/40 text-amber-300 border-amber-900/60">
                     {item.moderation_status}

@@ -40,7 +40,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, type, onViewDetails })
           <div className="w-full h-40 rounded-md overflow-hidden mb-3 bg-zinc-900 border border-zinc-800/80">
             <img
               src={item.thumbnail_url || item.image_url}
-              alt={item.title}
+              alt={item.item_name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             />
           </div>
@@ -60,7 +60,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, type, onViewDetails })
 
         {/* Title */}
         <h3 className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
-          {item.title}
+          {item.item_name}
         </h3>
 
         {/* Location */}
