@@ -18,8 +18,12 @@
       "destination": "/backend/app/main.py"
     },
     {
+      "source": "/(assets/.*|brand/.*|favicon\\..*)",
+      "destination": "/frontend/$1"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/frontend/index.html"
     }
   ]
 }
