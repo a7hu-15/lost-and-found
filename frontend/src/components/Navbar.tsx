@@ -36,7 +36,7 @@ export const Navbar: React.FC = () => {
         </Link>
 
         {/* Primary Nav Links */}
-        <nav className="flex items-center gap-1 text-xs font-sans overflow-x-auto whitespace-nowrap hide-scrollbar flex-nowrap pr-2 w-full">
+        <nav className="flex items-center justify-end gap-1 text-xs font-sans overflow-x-auto whitespace-nowrap hide-scrollbar flex-nowrap pr-2 w-full">
           <Link
             to="/"
             className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
@@ -106,12 +106,12 @@ export const Navbar: React.FC = () => {
             How It Works
           </Link>
 
-          {/* Theme Toggle Button */}
-          <div className={`ml-1 pl-2 border-l ${isLight ? 'border-zinc-300' : 'border-zinc-800'}`}>
-            <ThemeToggle />
-          </div>
         </nav>
 
+        {/* Theme Toggle Button */}
+        <div className={`shrink-0 ml-2 pl-4 border-l ${isLight ? 'border-zinc-300' : 'border-[#27272a]'}`}>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
