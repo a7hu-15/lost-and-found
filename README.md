@@ -1,6 +1,7 @@
 # Cloud Lost & Found
 
 **Live Platform:** [https://lost-and-found-sigma-three.vercel.app](https://lost-and-found-sigma-three.vercel.app)
+**Admin Dashboard:** [https://lost-and-found-sigma-three.vercel.app/admin/login](https://lost-and-found-sigma-three.vercel.app/admin/login)
 
 Cloud Lost & Found is a secure, cloud-native item recovery platform built with FastAPI and React. It modernizes the traditional lost-and-found process by digitizing item reporting, enforcing privacy through token-based tracking, and providing a centralized moderation dashboard for security personnel.
 
